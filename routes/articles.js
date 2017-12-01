@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Article = require('../modules/Article');
+const debug = require('debug')('routes:articles');
 
 router.get('/search/:searchTerm', (req, res, next) => {
         Article.searchByTerm(req.params.searchTerm).then(articles => {
@@ -11,25 +12,21 @@ router.get('/search/:searchTerm', (req, res, next) => {
 });
 
 router.get('/searchTitlesInYear/:searchTerm/:year', (req, res, next) => {
-  const searchParams = {
-  		queryString : ``,
-  	   maxResults : 100,
-  		     offset : 0,
-  			  aspects : [ "title"], // [ "title", "location", "summary", "lifecycle", "metadata"],
-  		constraints : [
-        `title:${req.params.searchTerm}`,
-        `lastPublishDateTime:>${req.params.year}-01-01T00:00:00Z`,
-        `lastPublishDateTime:<${req.params.year}-12-31T23:59:59Z`,
-      ],
-  	       facets : {"names":[], "maxElements":-1}
-  	};
-
-  Article.searchByParams(searchParams).then(articles => {
+  Article.searchTitlesInYear(req.params.searchTerm, req.params.year).then(articles => {
       res.json(articles);
   }).catch(e => {
       next(e);
   })
 });
 
+router.get('/alignTitlesInYear/:searchTerm/:year', (req, res, next) => {
+  const searchterm = req.params.searchTerm;
+  const year       = req.params.year;
+  Article.alignTitlesInYear(searchterm, year).then(alignedTitles => {
+      res.json(alignedTitles);
+  }).catch(e => {
+      next(e);
+  })
+});
 
 module.exports = router;
