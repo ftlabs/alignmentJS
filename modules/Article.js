@@ -1,5 +1,5 @@
 const fetchContent = require('../lib/fetchContent');
-const directly = require('../helpers/directly'); 
+const directly = require('../helpers/directly');
 const CAPI_CONCURRENCE = (process.env.hasOwnProperty('CAPI_CONCURRENCE'))? process.env.CAPI_CONCURRENCE : 4;
 
 function searchByTerm(searchTerm) {
@@ -8,6 +8,11 @@ function searchByTerm(searchTerm) {
     return fetchContent.search(params)
 }
 
+function searchByParams(params) {
+    return fetchContent.search(params)
+}
+
 module.exports = {
-    searchByTerm
+    searchByTerm,
+    searchByParams
 }
