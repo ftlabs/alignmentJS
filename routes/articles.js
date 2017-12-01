@@ -23,7 +23,11 @@ router.get('/alignTitlesInYear/:searchTerm/:year', (req, res, next) => {
   const searchterm = req.params.searchTerm;
   const year       = req.params.year;
   Article.alignTitlesInYear(searchterm, year).then(alignedTitles => {
-      res.json(alignedTitles);
+      res.render('alignedTitles', {
+        term : searchterm,
+        year,
+        alignedTitles
+      });
   }).catch(e => {
       next(e);
   })
