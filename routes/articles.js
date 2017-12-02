@@ -19,20 +19,20 @@ router.get('/searchTitlesInYear/:searchTerm/:year', (req, res, next) => {
   })
 });
 
-router.get('/alignTitlesInYear/:searchTerm/:year', (req, res, next) => {
-  const searchterm = req.params.searchTerm;
-  const year       = req.params.year;
-  Article.alignTitlesInYear(searchterm, year).then(results => {
+router.get('/alignTitlesInYear', (req, res, next) => {
+  const term = req.query.term;
+  const year = req.query.year;
+  Article.alignTitlesInYear(term, year).then(results => {
     res.json(results);
   }).catch(e => {
     next(e);
   })
 });
 
-router.get('/alignTitlesInYear/:searchTerm/:year/display', (req, res, next) => {
-  const searchterm = req.params.searchTerm;
-  const year       = req.params.year;
-  Article.alignTitlesInYear(searchterm, year).then(results => {
+router.get('/alignTitlesInYear/display', (req, res, next) => {
+  const term = req.query.term;
+  const year = req.query.year;
+  Article.alignTitlesInYear(term, year).then(results => {
     res.render('alignedTitles', results);
   }).catch(e => {
       next(e);

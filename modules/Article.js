@@ -31,6 +31,12 @@ function searchTitlesInYear(term, year) {
 }
 
 function alignTitlesInYear(term, year) {
+  if (term === null || term === undefined || term === '') {
+    term = 'brexit';
+  }
+  if (year === null || year === undefined) {
+    year = '2017';
+  }
     return searchTitlesInYear(term, year)
     .then(articles => {
       const results = (articles && articles.sapiObj && articles.sapiObj.results && articles.sapiObj.results[0] && articles.sapiObj.results[0].results)? articles.sapiObj.results[0].results : [];

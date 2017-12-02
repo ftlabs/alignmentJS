@@ -19,6 +19,13 @@
 
 <h1>Aligned Titles containing "{{term}}" in {{year}}</h1>
 <p class="description">{{description}}</p>
+
+<form>
+  term:<input type="text" name="term" value="{{term}}">
+  year:<input type="text" name="year" value="{{year}}">
+  <input type="submit" value="Submit">
+</form>
+
 <table>
   {{#each results}}
   <tr>
