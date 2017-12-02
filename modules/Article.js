@@ -42,10 +42,16 @@ function alignTitlesInYear(term, year) {
         const title = result.title.title;
         const match = regex.exec(title);
         // debug(`alignTitlesInYear: title=${title}, match=${JSON.stringify(match)}`);
-        return (match)? [match[1], match[2], match[3]] : [];
-      }).filter(parts => parts.length > 0);
-    }).then(splitTitles => {
-      return splitTitles.sort((a,b) => b[0].length - a[0].length);
+        return {
+          title,
+          titleParts : (match)? [match[1], match[2], match[3]] : [],
+          id         : result.id,
+          aspectSet  : result.aspectSet,
+          url        : `https://www.ft.com/content/${result.id}`,
+        }
+      }).filter(result => result.titleParts.length > 0);
+    }).then(results => {
+      return results.sort((a,b) => b.titleParts[0].length - a.titleParts[0].length);
     })
     ;
 }

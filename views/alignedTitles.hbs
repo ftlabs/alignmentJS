@@ -11,16 +11,19 @@
   text-align:left;
   white-space: nowrap
 }
+.term-link{
+  text-decoration: none;
+}
 </style>
 
 <h1>Aligned Titles containing "{{term}}" in {{year}}</h1>
 
 <table>
-  {{#each alignedTitles}}
+  {{#each results}}
   <tr>
-    <td class="left-of-term">{{this.[0]}}</td>
-    <td class="term">{{this.[1]}}</td>
-    <td class="right-of-term">{{this.[2]}}</td>
+    <td class="left-of-term"><a class="term-link" href="{{url}}">{{titleParts.[0]}}</a></td>
+    <td class="term"><a class="term-link" href="{{url}}">{{titleParts.[1]}}</a></td>
+    <td class="right-of-term"><a class="term-link" href="{{url}}">{{titleParts.[2]}}</a></td>
   </tr>
   {{/each}}
 </table>
