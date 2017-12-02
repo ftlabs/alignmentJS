@@ -18,7 +18,7 @@ function searchTitlesInYear(term, year) {
       queryString : ``,
        maxResults : 100,
            offset : 0,
-          aspects : [ "title"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+          aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
       constraints : [
         `title:${term}`,
         `lastPublishDateTime:>${year}-01-01T00:00:00Z`,
@@ -48,10 +48,16 @@ function alignTitlesInYear(term, year) {
           id         : result.id,
           aspectSet  : result.aspectSet,
           url        : `https://www.ft.com/content/${result.id}`,
+          lastPublishDateTime : result.lifecycle.lastPublishDateTime,
         }
       }).filter(result => result.titleParts.length > 0);
     }).then(results => {
-      return results.sort((a,b) => b.titleParts[0].length - a.titleParts[0].length);
+      return {
+        description : 'articles with titles matching the specified term in the specified year; titles are then split and aligned on the term, and sorted by length of text before the term.',
+        term,
+        year,
+        results : results.sort((a,b) => b.titleParts[0].length - a.titleParts[0].length)
+      }
     })
     ;
 }
