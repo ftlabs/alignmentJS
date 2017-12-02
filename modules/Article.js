@@ -52,11 +52,33 @@ function alignTitlesInYear(term, year) {
         }
       }).filter(result => result.titleParts.length > 0);
     }).then(results => {
+      results.sort((a,b) => {
+        const diffLeftLength = b.titleParts[0].length - a.titleParts[0].length;
+        if (diffLeftLength !== 0) {
+          return diffLeftLength;
+        }
+        const aLeftLower = a.titleParts[0].toLowerCase();
+        const bLeftLower = b.titleParts[0].toLowerCase();
+        if (aLeftLower !== bLeftLower) {
+          return (aLeftLower < bLeftLower)? -1 : 1;
+        }
+        const diffRightLength = a.titleParts[2].length - b.titleParts[2].length;
+        if (diffRightLength !== 0) {
+          return diffRightLength;
+        }
+        const aRightLower = a.titleParts[2].toLowerCase();
+        const bRightLower = b.titleParts[2].toLowerCase();
+        if (aRightLower !== bRightLower) {
+          return (aRightLower < bRightLower)? -1 : 1;
+        }
+        return 0;
+      });
+
       return {
         description : 'articles with titles matching the specified term in the specified year; titles are then split and aligned on the term, and sorted by length of text before the term.',
         term,
         year,
-        results : results.sort((a,b) => b.titleParts[0].length - a.titleParts[0].length)
+        results
       }
     })
     ;
