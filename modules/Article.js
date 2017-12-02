@@ -35,7 +35,7 @@ function alignTitlesInYear(term, year) {
     .then(articles => {
       const results = (articles && articles.sapiObj && articles.sapiObj.results && articles.sapiObj.results[0] && articles.sapiObj.results[0].results)? articles.sapiObj.results[0].results : [];
       // const regexStr = `^(.*?)\b(${searchterm})\b(.*)`;
-      const regexStr = `^(.*?)(${term})(.*)`;
+      const regexStr = `^(.*?)\\b(${term})\\b(.*)`;
       const regex = new RegExp(regexStr, 'i');
       // debug(`alignTitlesInYear: regexStr=${JSON.stringify(regexStr)}`);
       return results.map( result => {
