@@ -1,9 +1,12 @@
-# FT Labs - template_SAPI
+# FT Labs - alignmentJS
 
-Base project containing the barebones files to get started with SAPI requests and FT SSO.
+Experiments in search results. See the root page for endpoints.
+
+(used template_SAPI)
+
 ### Installation
 
-Configure the env params, either in SHELL or .env file:
+Configure the mandatory env params, either in SHELL or .env file:
 
 * CAPI_KEY=...
 * TOKEN=... # for auth'ed access w/o S3O or IP range. Can be set to noddy value for dev.
@@ -21,3 +24,11 @@ For tests, run:
 ```sh
 $ npm test
 ```
+
+### Configuration
+
+Optional env params
+
+* CAPI_CONCURRENCE=... (default=4)
+* DEFAULT_TERM=...     (default=brexit)
+* DEFAULT_YEAR=...     (default=2017')
