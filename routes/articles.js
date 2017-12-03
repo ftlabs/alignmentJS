@@ -42,4 +42,13 @@ router.get('/alignTitlesInYear/display', (req, res, next) => {
   })
 });
 
+router.get('/lookup', (req, res, next) => {
+  const uuid = req.query.uuid;
+  Article.articleByUUID(uuid).then(article => {
+      res.json(article);
+  }).catch(e => {
+      next(e);
+  })
+});
+
 module.exports = router;

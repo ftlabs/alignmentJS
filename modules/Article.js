@@ -97,9 +97,15 @@ function alignTitlesInYear(term, year) {
   ;
 }
 
+function articleByUUID(uuid) {
+    return fetchContent.article(uuid)
+}
+
+
 module.exports = {
     searchByTerm,
     searchByParams,
     searchTitlesInYear,
     alignTitlesInYear,
+    articleByUUID,
 }
