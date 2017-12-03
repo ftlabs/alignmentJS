@@ -3,7 +3,7 @@ const router = express.Router();
 const Article = require('../modules/Article');
 const debug = require('debug')('routes:articles');
 
-router.get('/search/:searchTerm', (req, res, next) => {
+router.get('/search', (req, res, next) => {
   const term = req.query.term;
   Article.searchByTerm(term).then(articles => {
       res.json(articles);
