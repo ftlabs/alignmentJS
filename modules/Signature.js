@@ -16,6 +16,21 @@ function uuid(uuid) {
         uuid,
         title : article.title,
       };
+
+      const knownPredicates = {};
+
+      article.annotations.forEach( annotation => {
+        const predicate = annotation.predicate;
+        if (! knownPredicates.hasOwnProperty(predicate)) {
+          knownPredicates[predicate] = [];
+        }
+        knownPredicates[predicate].push(annotation);
+      });
+
+      signature.annotations = {
+        byPredicates : knownPredicates,
+      }
+
       return signature;
     })
     ;
