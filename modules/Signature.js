@@ -170,8 +170,10 @@ function compareSigWords( sig0, sig1 ){
     return sig1aNSW.includes(word);
   });
 
+  const avgSetSize = (sig0.wordStats.texts.allNonStopWords.length, sig1.wordStats.texts.allNonStopWords.length)/2;
   return {
-    description : "looking for significance in the overlap of words",
+    description : "Looking for significance in the overlap of words. Score is the proportion of the avg set size of non-StopWords which is overlapping.",
+    score : overlappingNonStopWords.length / avgSetSize,
     overlappingNonStopWords,
   }
 }
