@@ -106,6 +106,7 @@ function signature(uuid) {
     const signature = {
       uuid,
       title : article.title,
+      publishedDate : article.publishedDate,
     };
 
     const byId = {};
@@ -135,6 +136,9 @@ function signature(uuid) {
 }
 
 function compareSigPredicates( sig0, sig1 ){
+  // loop over each sig0 predicate
+  //   if sig1 has that predicate, loop over each annotation
+  //     if sig1 has that annotation, add it (and it's readable name) to the set.
   const overlappingPredicates = {};
   const sig0ByPredicate = sig0.annotations.byPredicate;
   const sig1ByPredicate = sig1.annotations.byPredicate;
@@ -142,7 +146,7 @@ function compareSigPredicates( sig0, sig1 ){
     if (sig1ByPredicate.hasOwnProperty( predicate )) {
       const overlappingIds = {};
       Object.keys(sig0ByPredicate[predicate]).forEach( id => {
-        if (sig0ByPredicate[predicate].hasOwnProperty(id)) {
+        if (sig1ByPredicate[predicate].hasOwnProperty(id)) {
           overlappingIds[id] = sig0ByPredicate[predicate][id];
         }
       });
@@ -159,7 +163,7 @@ function compareSigPredicates( sig0, sig1 ){
 }
 
 function compareSigWords( sig0, sig1 ){
-  //wordStats.texts.allNonStopWords
+  // look for non-StopWords shared by both sigs
 
   const sig1aNSW = sig1.wordStats.texts.allNonStopWords;
   const overlappingNonStopWords = sig0.wordStats.texts.allNonStopWords.filter( word => {
@@ -178,7 +182,7 @@ function compare(uuid0, uuid1){
   .then( sigs => {
 
     const comparison = {
-      ids : [uuid0, uuid1],
+      ids : {},
       predicates : compareSigPredicates(sigs[0], sigs[1]),
       words      : compareSigWords(sigs[0], sigs[1]),
       deltas : {
@@ -188,6 +192,8 @@ function compare(uuid0, uuid1){
       sigs : {},
     };
 
+    comparison.ids[uuid0] = `${sigs[0].title}, ${sigs[0].publishedDate}`;
+    comparison.ids[uuid1] = `${sigs[1].title}, ${sigs[1].publishedDate}`;
     comparison.sigs[uuid0] = sigs[0];
     comparison.sigs[uuid1] = sigs[1];
 
