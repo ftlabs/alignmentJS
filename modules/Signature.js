@@ -115,9 +115,9 @@ function signature(uuid) {
       byId[annotation.id] = annotation;
       const predicate = annotation.predicate;
       if (! knownPredicates.hasOwnProperty(predicate)) {
-        knownPredicates[predicate] = [];
+        knownPredicates[predicate] = {};
       }
-      knownPredicates[predicate].push(annotation.id);
+      knownPredicates[predicate][annotation.id] = `${annotation.type}:${annotation.prefLabel}`;
     });
 
     signature.wordStats = calcFreqOfNonStopWords(article.bodyXML);
@@ -143,8 +143,13 @@ function compare(uuid0, uuid1){
     const sig1ByPredicate = sigs[1].annotations.byPredicate;
     Object.keys(sig0ByPredicate).forEach( predicate => {
       if (sig1ByPredicate.hasOwnProperty( predicate )) {
-        const overlappingIds = sig0ByPredicate[predicate].filter( id => { return sig1ByPredicate[predicate].includes(id);});
-        if (overlappingIds.length > 0) {
+        const overlappingIds = {};
+        Object.keys(sig0ByPredicate[predicate]).forEach( id => {
+          if (sig0ByPredicate[predicate].hasOwnProperty(id)) {
+            overlappingIds[id] = sig0ByPredicate[predicate][id];
+          }
+        });
+        if (Object.keys(overlappingIds).length > 0) {
           overlappingPredicates[predicate] = overlappingIds;
         }
       }
@@ -152,6 +157,7 @@ function compare(uuid0, uuid1){
 
     const comparison = {
       overlaps : {
+        description : 'For each predicate (aka type of annotation), we look for the same ids (and readable name, aka type:prefLabel) in both signatures.',
         predicates : overlappingPredicates,
       },
       deltas : {
