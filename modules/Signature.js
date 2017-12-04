@@ -1,6 +1,7 @@
 // const fetchContent = require('../lib/fetchContent');
 const directly = require('../helpers/directly');
 const Article = require('./Article');
+const SimpleCache = require('../helpers/simple-cache');
 const debug = require('debug')('modules:Signature');
 
 function defaultValueIfNotSet(currentVal, defaultVal){
@@ -90,36 +91,60 @@ function calcFreqOfNonStopWords(text){
   }
 }
 
-function uuid(uuid) {
-    return Article.articleByUUID(uuid)
-    .then( article => {
-      const signature = {
-        uuid,
-        title : article.title,
-      };
+const SIGNATURE_CACHE = new SimpleCache();
 
-      const knownPredicates = {};
+function signature(uuid) {
 
-      article.annotations.forEach( annotation => {
-        const predicate = annotation.predicate;
-        if (! knownPredicates.hasOwnProperty(predicate)) {
-          knownPredicates[predicate] = [];
-        }
-        knownPredicates[predicate].push(annotation);
-      });
+  const cachedSigItem = SIGNATURE_CACHE.read( uuid );
+  if (cachedSigItem !== undefined) {
+    debug(`signature: cache hit: uuid=${uuid}}`);
+    return Promise.resolve(cachedSigItem);
+  }
 
-      signature.wordStats = calcFreqOfNonStopWords(article.bodyXML);
+  return Article.articleByUUID(uuid)
+  .then( article => {
+    const signature = {
+      uuid,
+      title : article.title,
+    };
 
-      signature.annotations = {
-        byPredicates : knownPredicates,
+    const knownPredicates = {};
+
+    article.annotations.forEach( annotation => {
+      const predicate = annotation.predicate;
+      if (! knownPredicates.hasOwnProperty(predicate)) {
+        knownPredicates[predicate] = [];
       }
+      knownPredicates[predicate].push(annotation);
+    });
 
-      return signature;
-    })
-    ;
+    signature.wordStats = calcFreqOfNonStopWords(article.bodyXML);
+
+    signature.annotations = {
+      byPredicates : knownPredicates,
+    }
+
+    SIGNATURE_CACHE.write(uuid, signature);
+
+    return signature;
+  })
+  ;
 }
 
+function compare(uuid0, uuid1){
+  const sigPromises = [signature(uuid0), signature(uuid1)];
+  return Promise.all( sigPromises )
+  .then( sigs => {
+    const comparison = {
+      deltaUniqueWordsMinusStops : Math.abs( sigs[0].wordStats.count.uniqueWordsMinusStops - sigs[1].wordStats.count.uniqueWordsMinusStops ),
+    };
+
+    return comparison;
+  })
+  ;
+}
 
 module.exports = {
-  uuid,
+  uuid : signature,
+  compare
 }

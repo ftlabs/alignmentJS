@@ -61,4 +61,14 @@ router.get('/signature', (req, res, next) => {
   })
 });
 
+router.get('/signature/compare', (req, res, next) => {
+  const uuid1 = req.query.uuid1;
+  const uuid2 = req.query.uuid2;
+  Signature.compare(uuid1, uuid2).then(comparison => {
+      res.json(comparison);
+  }).catch(e => {
+      next(e);
+  })
+});
+
 module.exports = router;
