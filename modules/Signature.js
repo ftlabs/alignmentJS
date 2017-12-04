@@ -108,20 +108,23 @@ function signature(uuid) {
       title : article.title,
     };
 
+    const byId = {};
     const knownPredicates = {};
 
     article.annotations.forEach( annotation => {
+      byId[annotation.id] = annotation;
       const predicate = annotation.predicate;
       if (! knownPredicates.hasOwnProperty(predicate)) {
         knownPredicates[predicate] = [];
       }
-      knownPredicates[predicate].push(annotation);
+      knownPredicates[predicate].push(annotation.id);
     });
 
     signature.wordStats = calcFreqOfNonStopWords(article.bodyXML);
 
     signature.annotations = {
-      byPredicates : knownPredicates,
+      byPredicate : knownPredicates,
+      byId,
     }
 
     SIGNATURE_CACHE.write(uuid, signature);
@@ -135,8 +138,25 @@ function compare(uuid0, uuid1){
   const sigPromises = [signature(uuid0), signature(uuid1)];
   return Promise.all( sigPromises )
   .then( sigs => {
+    const overlappingPredicates = {};
+    const sig0ByPredicate = sigs[0].annotations.byPredicate;
+    const sig1ByPredicate = sigs[1].annotations.byPredicate;
+    Object.keys(sig0ByPredicate).forEach( predicate => {
+      if (sig1ByPredicate.hasOwnProperty( predicate )) {
+        const overlappingIds = sig0ByPredicate[predicate].filter( id => { return sig1ByPredicate[predicate].includes(id);});
+        if (overlappingIds.length > 0) {
+          overlappingPredicates[predicate] = overlappingIds;
+        }
+      }
+    })
+
     const comparison = {
-      deltaUniqueWordsMinusStops : Math.abs( sigs[0].wordStats.count.uniqueWordsMinusStops - sigs[1].wordStats.count.uniqueWordsMinusStops ),
+      overlaps : {
+        predicates : overlappingPredicates,
+      },
+      deltas : {
+        UniqueWordsMinusStops : Math.abs( sigs[0].wordStats.count.uniqueWordsMinusStops - sigs[1].wordStats.count.uniqueWordsMinusStops ),
+      }
     };
 
     return comparison;
