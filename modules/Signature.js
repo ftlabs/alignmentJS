@@ -201,28 +201,31 @@ function compare(uuid0, uuid1){
   return Promise.all( sigPromises )
   .then( sigs => {
 
+    const predicates = compareSigPredicates(sigs[0], sigs[1]);
+    const words = compareSigWords(sigs[0], sigs[1])
+
+    const score = (predicates.score + words.score) / 2;
+
     const comparison = {
-      ids : {},
-      score : 0,
-      scoreDetails : {},
-      predicates : compareSigPredicates(sigs[0], sigs[1]),
-      words      : compareSigWords(sigs[0], sigs[1]),
+      ids : {
+        [uuid0] : `${sigs[0].title}, ${sigs[0].publishedDate}`,
+        [uuid1] : `${sigs[1].title}, ${sigs[1].publishedDate}`,
+      },
+      score,
+      scoreDetails : {
+        description : 'avg of predicates score and words score',
+      },
+      predicates,
+      words,
       deltas : {
         UniqueWordsMinusStops : Math.abs( sigs[0].wordStats.count.uniqueWordsMinusStops - sigs[1].wordStats.count.uniqueWordsMinusStops ),
         the : Math.abs( sigs[0].wordStats.count.the - sigs[1].wordStats.count.the ),
       },
-      sigs : {},
+      sigs : {
+        [uuid0] : sigs[0],
+        [uuid1] : sigs[1],
+      },
     };
-
-    comparison.ids[uuid0] = `${sigs[0].title}, ${sigs[0].publishedDate}`;
-    comparison.ids[uuid1] = `${sigs[1].title}, ${sigs[1].publishedDate}`;
-    comparison.sigs[uuid0] = sigs[0];
-    comparison.sigs[uuid1] = sigs[1];
-
-    comparison.score = (comparison.predicates.score + comparison.words.score) / 2;
-    comparison.scoreDetails = {
-      description : 'avg of predicates score and words score',
-    }
 
     return comparison;
   })
