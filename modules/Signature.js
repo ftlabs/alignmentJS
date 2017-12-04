@@ -134,32 +134,37 @@ function signature(uuid) {
   ;
 }
 
+function comparePredicates( sig0, sig1 ){
+  const overlappingPredicates = {};
+  const sig0ByPredicate = sig0.annotations.byPredicate;
+  const sig1ByPredicate = sig1.annotations.byPredicate;
+  Object.keys(sig0ByPredicate).forEach( predicate => {
+    if (sig1ByPredicate.hasOwnProperty( predicate )) {
+      const overlappingIds = {};
+      Object.keys(sig0ByPredicate[predicate]).forEach( id => {
+        if (sig0ByPredicate[predicate].hasOwnProperty(id)) {
+          overlappingIds[id] = sig0ByPredicate[predicate][id];
+        }
+      });
+      if (Object.keys(overlappingIds).length > 0) {
+        overlappingPredicates[predicate] = overlappingIds;
+      }
+    }
+  })
+
+  return {
+    description : 'For each predicate (aka type of annotation), we look for the same ids (and readable name, aka type:prefLabel) in both signatures.',
+    overlaps: overlappingPredicates
+  }
+}
+
 function compare(uuid0, uuid1){
   const sigPromises = [signature(uuid0), signature(uuid1)];
   return Promise.all( sigPromises )
   .then( sigs => {
-    const overlappingPredicates = {};
-    const sig0ByPredicate = sigs[0].annotations.byPredicate;
-    const sig1ByPredicate = sigs[1].annotations.byPredicate;
-    Object.keys(sig0ByPredicate).forEach( predicate => {
-      if (sig1ByPredicate.hasOwnProperty( predicate )) {
-        const overlappingIds = {};
-        Object.keys(sig0ByPredicate[predicate]).forEach( id => {
-          if (sig0ByPredicate[predicate].hasOwnProperty(id)) {
-            overlappingIds[id] = sig0ByPredicate[predicate][id];
-          }
-        });
-        if (Object.keys(overlappingIds).length > 0) {
-          overlappingPredicates[predicate] = overlappingIds;
-        }
-      }
-    })
 
     const comparison = {
-      overlaps : {
-        description : 'For each predicate (aka type of annotation), we look for the same ids (and readable name, aka type:prefLabel) in both signatures.',
-        predicates : overlappingPredicates,
-      },
+      predicates : comparePredicates(sigs[0], sigs[1]),
       deltas : {
         UniqueWordsMinusStops : Math.abs( sigs[0].wordStats.count.uniqueWordsMinusStops - sigs[1].wordStats.count.uniqueWordsMinusStops ),
       }
