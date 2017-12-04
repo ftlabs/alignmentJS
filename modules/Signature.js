@@ -142,6 +142,7 @@ function compareSigPredicates( sig0, sig1 ){
   const overlappingPredicates = {};
   const sig0ByPredicate = sig0.annotations.byPredicate;
   const sig1ByPredicate = sig1.annotations.byPredicate;
+  const annotationSetOverlapScores = [];
   Object.keys(sig0ByPredicate).forEach( predicate => {
     if (sig1ByPredicate.hasOwnProperty( predicate )) {
       const overlappingIds = {};
@@ -152,12 +153,24 @@ function compareSigPredicates( sig0, sig1 ){
       });
       if (Object.keys(overlappingIds).length > 0) {
         overlappingPredicates[predicate] = overlappingIds;
+        const avgAnnotationSetSize = ( Object.keys(sig0ByPredicate[predicate]).length + Object.keys(sig1ByPredicate[predicate]).length) / 2;
+        annotationSetOverlapScores.push( Object.keys(overlappingIds).length / avgAnnotationSetSize );
       }
     }
   })
 
+  const avgPredicateSetSize = (Object.keys(sig0ByPredicate).length + Object.keys(sig1ByPredicate).length)/2;
+  const sumAnnotationSetOverlapScores = annotationSetOverlapScores.reduce((acc, curr) => acc + curr);
+
   return {
     description : 'For each predicate (aka type of annotation), we look for the same ids (and readable name, aka type:prefLabel) in both signatures.',
+    score : sumAnnotationSetOverlapScores / avgPredicateSetSize,
+    scoreDetails : {
+      description: 'look at the number of overlapping annotations for each predicate (scaled by the avg number of annotations in that predicate), sum them, and divide by the avg num of predicates.',
+      avgPredicateSetSize,
+      annotationSetOverlapScores,
+      sumAnnotationSetOverlapScores,
+    },
     overlaps: overlappingPredicates
   }
 }
@@ -172,8 +185,13 @@ function compareSigWords( sig0, sig1 ){
 
   const avgSetSize = (sig0.wordStats.texts.allNonStopWords.length, sig1.wordStats.texts.allNonStopWords.length)/2;
   return {
-    description : "Looking for significance in the overlap of words. Score is the proportion of the avg set size of non-StopWords which is overlapping.",
+    description : "Looking for significance in the overlap of words.",
     score : overlappingNonStopWords.length / avgSetSize,
+    scoreDetails : {
+      description: 'look at the proportion of the avg set size of non-StopWords which is overlapping',
+      overlappingNonStopWordsLength : overlappingNonStopWords.length,
+      avgSetSize
+    },
     overlappingNonStopWords,
   }
 }
@@ -185,6 +203,8 @@ function compare(uuid0, uuid1){
 
     const comparison = {
       ids : {},
+      score : 0,
+      scoreDetails : {},
       predicates : compareSigPredicates(sigs[0], sigs[1]),
       words      : compareSigWords(sigs[0], sigs[1]),
       deltas : {
@@ -198,6 +218,11 @@ function compare(uuid0, uuid1){
     comparison.ids[uuid1] = `${sigs[1].title}, ${sigs[1].publishedDate}`;
     comparison.sigs[uuid0] = sigs[0];
     comparison.sigs[uuid1] = sigs[1];
+
+    comparison.score = (comparison.predicates.score + comparison.words.score) / 2;
+    comparison.scoreDetails = {
+      description : 'avg of predicates score and words score',
+    }
 
     return comparison;
   })
