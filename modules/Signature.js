@@ -134,7 +134,7 @@ function signature(uuid) {
   ;
 }
 
-function comparePredicates( sig0, sig1 ){
+function compareSigPredicates( sig0, sig1 ){
   const overlappingPredicates = {};
   const sig0ByPredicate = sig0.annotations.byPredicate;
   const sig1ByPredicate = sig1.annotations.byPredicate;
@@ -158,17 +158,38 @@ function comparePredicates( sig0, sig1 ){
   }
 }
 
+function compareSigWords( sig0, sig1 ){
+  //wordStats.texts.allNonStopWords
+
+  const sig1aNSW = sig1.wordStats.texts.allNonStopWords;
+  const overlappingNonStopWords = sig0.wordStats.texts.allNonStopWords.filter( word => {
+    return sig1aNSW.includes(word);
+  });
+
+  return {
+    description : "looking for significance in the overlap of words",
+    overlappingNonStopWords,
+  }
+}
+
 function compare(uuid0, uuid1){
   const sigPromises = [signature(uuid0), signature(uuid1)];
   return Promise.all( sigPromises )
   .then( sigs => {
 
     const comparison = {
-      predicates : comparePredicates(sigs[0], sigs[1]),
+      ids : [uuid0, uuid1],
+      predicates : compareSigPredicates(sigs[0], sigs[1]),
+      words      : compareSigWords(sigs[0], sigs[1]),
       deltas : {
         UniqueWordsMinusStops : Math.abs( sigs[0].wordStats.count.uniqueWordsMinusStops - sigs[1].wordStats.count.uniqueWordsMinusStops ),
-      }
+        the : Math.abs( sigs[0].wordStats.count.the - sigs[1].wordStats.count.the ),
+      },
+      sigs : {},
     };
+
+    comparison.sigs[uuid0] = sigs[0];
+    comparison.sigs[uuid1] = sigs[1];
 
     return comparison;
   })
