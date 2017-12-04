@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Article = require('../modules/Article');
+const Signature = require('../modules/Signature');
 const debug = require('debug')('routes:articles');
 
 router.get('/search', (req, res, next) => {
@@ -46,6 +47,15 @@ router.get('/lookup', (req, res, next) => {
   const uuid = req.query.uuid;
   Article.articleByUUID(uuid).then(article => {
       res.json(article);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/signature', (req, res, next) => {
+  const uuid = req.query.uuid;
+  Signature.uuid(uuid).then(signature => {
+      res.json(signature);
   }).catch(e => {
       next(e);
   })
