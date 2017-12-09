@@ -102,9 +102,9 @@ function calcFreqOfNonStopWords(text){
 const CACHE = new SimpleCache();
 
 class Signature {
-  constructor( sources, annotations, wordStats, score ){
+  constructor( sources, annotations, wordStats ){
     this.titles      = [].concat.apply([], sources.map(s => s.titles)); // flatten list of list of titles
-    this.score       = score;
+    this.score       = Signature.CalcScore(annotations, wordStats),
     this.annotations = annotations;
     this.wordStats   = wordStats;
     this.sources     = sources;
@@ -146,19 +146,21 @@ class Signature {
         knownPredicates[predicate][annotation.id] = `${annotation.type}:${annotation.prefLabel}`;
       });
 
-      const wordStats = calcFreqOfNonStopWords(article.bodyXML);
-
-      const annotations = {
-        byPredicate : knownPredicates,
-        byId,
-      }
-
       const score = {
         amount : 1.0,
         description : 'default score for just one thingy',
       };
 
-      const sig = new Signature([source], annotations, wordStats, score );
+      const wordStats = calcFreqOfNonStopWords(article.bodyXML);
+      wordStats.score = score;
+
+      const annotations = {
+        byPredicate : knownPredicates,
+        byId,
+      }
+      annotations.score = score;
+
+      const sig = new Signature([source], annotations, wordStats );
       CACHE.write(uuid, sig);
       return sig;
     })
@@ -304,9 +306,8 @@ class Signature {
   static MergeSigs( sigs ){
     const annotations = Signature.CompareAnnotations(sigs);
     const wordStats   = Signature.CompareWordStats(sigs);
-    const score       = Signature.CalcScore(annotations, wordStats);
 
-    const sig = new Signature(sigs, annotations, wordStats, score );
+    const sig = new Signature(sigs, annotations, wordStats );
     return sig;
   }
 
