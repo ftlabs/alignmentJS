@@ -103,7 +103,7 @@ const CACHE = new SimpleCache();
 
 class Signature {
   constructor( sources, annotations, wordStats, score ){
-    this.title       = sources.map(s => s.title).join('; ');
+    this.titles      = [].concat.apply([], sources.map(s => s.titles)); // flatten list of list of titles
     this.score       = score;
     this.annotations = annotations;
     this.wordStats   = wordStats;
@@ -120,7 +120,7 @@ class Signature {
     return Article.articleByUUID(uuid)
     .then( article => {
       const source = {
-        title: `${article.title}(${article.publishedDate})`,
+        titles: [`${article.title}(${article.publishedDate})`],
         type: 'article',
         id: uuid,
         data: article,
