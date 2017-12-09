@@ -37,7 +37,7 @@ function suggestBetween( uuids ){
       return articles;
     })
     .then( articles => {
-      const promisers = articles.map( a => {
+      const promisers = articles.slice(0,20).map( a => {
         return function() {
           return Signature.byUuids( uuids.concat(a.id) )
           .catch( err => {
@@ -63,7 +63,7 @@ function suggestBetween( uuids ){
       suggestions.sort( (a,b) => (b.score - a.score) );
 
       return {
-        suggestions,
+        articles : suggestions,
         given : {
           titles : combinedSig.titles,
           score : combinedSig.score,
@@ -76,8 +76,39 @@ function suggestBetween( uuids ){
   })
 }
 
+function suggestBetweenTabulated(uuids){
+  return suggestBetween( uuids )
+  .then( suggestions => {
+    const datesScores = {};
+    const knownBuckets = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0];
+
+    suggestions.articles.forEach( article => {
+      const dayString = article.lastPublishDateTime.replace(/T.*/,'');
+      const scoreBucket = Math.ceil(article.score*10)/10;
+      if (! datesScores.hasOwnProperty(dayString)) {
+        datesScores[dayString] = {};
+        knownBuckets.forEach( b => {
+          datesScores[dayString][b] = [];
+        });
+      }
+      datesScores[dayString][scoreBucket].push(article);
+    });
+
+    const knownDates = Object.keys(datesScores).sort();
+
+    suggestions.tabulatedArticles = {
+      knownDates,
+      knownBuckets,
+      datesScores
+    };
+    return suggestions;
+  })
+  ;
+}
+
 module.exports = {
   between : suggestBetween,
+  betweenTabulated : suggestBetweenTabulated
   // before : suggestBefore,
   // after : suggestAfter,
 }

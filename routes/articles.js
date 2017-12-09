@@ -125,4 +125,32 @@ router.get('/suggest/between/:uuidCsv', (req, res, next) => {
   })
 });
 
+router.get('/suggest/between/:uuidCsv/tabulated', (req, res, next) => {
+  const uuidCsv = req.params.uuidCsv;
+
+  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
+  debug(`/suggest/between/:uuidCsv/tabulated : uuids=${JSON.stringify(uuids)}`);
+
+  Suggest.betweenTabulated(uuids)
+  .then(tabulated => {
+    res.json(tabulated);
+  }).catch(e => {
+    next(e);
+  })
+});
+
+router.get('/suggest/between/:uuidCsv/tabulated/display', (req, res, next) => {
+  const uuidCsv = req.params.uuidCsv;
+
+  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
+  debug(`/suggest/between/:uuidCsv/tabulated/display : uuids=${JSON.stringify(uuids)}`);
+
+  Suggest.betweenTabulated(uuids)
+  .then(tabulated => {
+      res.render('tabulatedSuggestions', tabulated);
+  }).catch(e => {
+    next(e);
+  })
+});
+
 module.exports = router;
