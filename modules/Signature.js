@@ -116,6 +116,7 @@ class Signature {
       latest,
       rangeInDays
     };
+    this.uuids       = [].concat.apply([], sources.map(s => s.uuids)); // flatten list of list of uuids
     this.annotations = annotations;
     this.wordStats   = wordStats;
     this.sources     = sources;
@@ -133,6 +134,7 @@ class Signature {
       const source = {
         titles: [`${article.title}(${article.publishedDate})`],
         type: 'article',
+        uuids: [uuid],
         id: uuid,
         data: article,
         publishedDates: {
@@ -355,6 +357,10 @@ class Signature {
       .then( mergedSig => {
         CACHE.write(cacheKey, mergedSig);
         return mergedSig;
+      })
+      .catch( err => {
+        console.log( `ERROR: CreateByUuids: promise for uuids=${JSON.stringify(uuids)}, err=${err}`);
+        return null;
       })
       ;
   }

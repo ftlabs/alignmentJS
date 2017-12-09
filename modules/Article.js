@@ -101,6 +101,27 @@ function articleByUUID(uuid) {
     return fetchContent.article(uuid)
 }
 
+function searchEntityDateRange(ontology, id, fromDate, toDate) {
+
+  fromDate = fromDate.replace(/\.\d+Z$/, 'Z');
+  toDate   =   toDate.replace(/\.\d+Z$/, 'Z');
+
+  const params = {
+      queryString : ``,
+       maxResults : 100,
+           offset : 0,
+          aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+      constraints : [
+        `${ontology}:${id}`,
+        // `title:Brexit`,
+        `lastPublishDateTime:>${fromDate}`,
+        `lastPublishDateTime:<${toDate}`,
+      ],
+           facets : {"names":[], "maxElements":-1}
+    };
+
+    return fetchContent.search(params)
+}
 
 module.exports = {
     searchByTerm,
@@ -108,4 +129,5 @@ module.exports = {
     searchTitlesInYear,
     alignTitlesInYear,
     articleByUUID,
+    searchEntityDateRange,
 }

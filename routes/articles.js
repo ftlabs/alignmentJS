@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Article = require('../modules/Article');
 const Signature = require('../modules/Signature');
+const Suggest = require('../modules/Suggest');
 const fetchContent = require('../lib/fetchContent');
 const debug = require('debug')('routes:articles');
 
@@ -97,5 +98,31 @@ router.get('/v2v1Concordance', (req, res, next) => {
   })
 });
 
+router.get('/searchEntityDateRange', (req, res, next) => {
+  const ontology = req.query.ontology;
+  const id       = req.query.id;
+  const fromDate = req.query.fromDate;
+  const toDate   = req.query.toDate;
+  Article.searchEntityDateRange(ontology, id, fromDate, toDate)
+  .then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/suggest/between/:uuidCsv', (req, res, next) => {
+  const uuidCsv = req.params.uuidCsv;
+
+  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
+  debug(`/suggest/between/:uuidCsv : uuids=${JSON.stringify(uuids)}`);
+
+  Suggest.between(uuids)
+  .then(articles => {
+      res.json(articles);
+  }).catch(e => {
+      next(e);
+  })
+});
 
 module.exports = router;
