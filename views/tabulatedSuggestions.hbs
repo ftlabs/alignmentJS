@@ -1,7 +1,6 @@
 <style>
-.left-of-term, .term, .right-of-term {
+.date-heading {
   white-space: nowrap;
-  font-family: monospace;
 }
 .bucket-heading {
   text-align:center;
@@ -10,7 +9,7 @@
   text-decoration: none;
 }
 
-table tr
+table tr, table td
 {
     border:1px solid black;
 }
@@ -30,9 +29,10 @@ table {
   {{/each}}
 </ul>
 
-<p>Score = {{tabulatedArticles.given.score}}<p>
+<p>Similarity Score = {{tabulatedArticles.given.score}}<p>
 
 <h2>Suggestions for 'similar' articles based on shared annotations and words</h2>
+<p>grouped by pubDate and similarity score (1 is best, 0 is worst)</p>
 
 <table>
   <tr>
@@ -43,14 +43,12 @@ table {
   </tr>
   {{#each tabulatedArticles.tabulatedSuggestions}}
   <tr>
-    <td>{{ date }}</td>
+    <td class="date-heading">{{ date }}</td>
     {{#each buckets as |bucket|}}
       <td class="bucket">
-        <ul>
         {{#each bucket as |article|}}
-          <li><a class="link" href="{{url}}">{{title}}</a> ({{score}})</li>
+          [{{score}}] - <a class="link" href="{{url}}">{{title}}</a><br>
         {{/each}}
-      </ul>
       </td>
     {{/each}}
   </tr>

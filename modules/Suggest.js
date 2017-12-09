@@ -37,7 +37,7 @@ function suggestBetween( uuids ){
       return articles;
     })
     .then( articles => {
-      const promisers = articles.slice(0,20).map( a => {
+      const promisers = articles.map( a => {
         return function() {
           return Signature.byUuids( uuids.concat(a.id) )
           .catch( err => {
@@ -78,15 +78,23 @@ function suggestBetween( uuids ){
   })
 }
 
+const IGNORE_BUCKETS_WORSE_THAN = 0.3;
+
 function suggestBetweenTabulated(uuids){
   return suggestBetween( uuids )
   .then( suggestions => {
     const datesScores = {};
-    const knownBuckets = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0];
+    const knownBuckets = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
+    let maxNonEmptyBucket = 0;
 
     suggestions.articles.forEach( article => {
       const dayString = article.lastPublishDateTime.replace(/T.*/,'');
-      const scoreBucket = Math.ceil(article.score*10)/10;
+      let scoreBucket = Math.ceil(article.score*10)/10;
+      if (scoreBucket === 0) {
+        scoreBucket = 0.1;
+      }
+      maxNonEmptyBucket = (scoreBucket > maxNonEmptyBucket)? scoreBucket : maxNonEmptyBucket;
+
       if (! datesScores.hasOwnProperty(dayString)) {
         datesScores[dayString] = {};
         knownBuckets.forEach( b => {
@@ -98,10 +106,12 @@ function suggestBetweenTabulated(uuids){
 
     const knownDates = Object.keys(datesScores).sort();
 
+    const minBucket = (maxNonEmptyBucket > IGNORE_BUCKETS_WORSE_THAN)? IGNORE_BUCKETS_WORSE_THAN : maxNonEmptyBucket;
+    const goodEnoughBuckets = knownBuckets.filter( b => (b >= minBucket));
     const tabulatedSuggestions = knownDates.map(d => {
       return row = {
         date : d,
-        buckets : knownBuckets.map(b => {
+        buckets : goodEnoughBuckets.map(b => {
           return datesScores[d][b];
         }),
       };
@@ -121,7 +131,7 @@ function suggestBetweenTabulated(uuids){
 
     suggestions.tabulatedArticles = {
       knownDates,
-      knownBuckets,
+      knownBuckets : goodEnoughBuckets,
       tabulatedSuggestions,
       given : tabulatedGiven,
     };
