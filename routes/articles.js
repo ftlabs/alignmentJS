@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Article = require('../modules/Article');
 const Signature = require('../modules/Signature');
+const Suggest = require('../modules/Suggest');
+const fetchContent = require('../lib/fetchContent');
 const debug = require('debug')('routes:articles');
 
 router.get('/search', (req, res, next) => {
@@ -75,6 +77,79 @@ router.get('/signature/:uuidCsv', (req, res, next) => {
       res.json(comparison);
   }).catch(e => {
       next(e);
+  })
+});
+
+router.get('/v2Lookup', (req, res, next) => {
+  const url = req.query.url;
+  fetchContent.v2ApiCall(url).then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/v2v1Concordance', (req, res, next) => {
+  const url = req.query.url;
+  fetchContent.v2v1Concordance(url).then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/searchEntityDateRange', (req, res, next) => {
+  const ontology = req.query.ontology;
+  const id       = req.query.id;
+  const fromDate = req.query.fromDate;
+  const toDate   = req.query.toDate;
+  Article.searchEntityDateRange(ontology, id, fromDate, toDate)
+  .then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/suggest/between/:uuidCsv', (req, res, next) => {
+  const uuidCsv = req.params.uuidCsv;
+
+  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
+  debug(`/suggest/between/:uuidCsv : uuids=${JSON.stringify(uuids)}`);
+
+  Suggest.between(uuids)
+  .then(articles => {
+      res.json(articles);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/suggest/between/:uuidCsv/tabulated', (req, res, next) => {
+  const uuidCsv = req.params.uuidCsv;
+
+  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
+  debug(`/suggest/between/:uuidCsv/tabulated : uuids=${JSON.stringify(uuids)}`);
+
+  Suggest.betweenTabulated(uuids)
+  .then(tabulated => {
+    res.json(tabulated);
+  }).catch(e => {
+    next(e);
+  })
+});
+
+router.get('/suggest/between/:uuidCsv/tabulated/display', (req, res, next) => {
+  const uuidCsv = req.params.uuidCsv;
+
+  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
+  debug(`/suggest/between/:uuidCsv/tabulated/display : uuids=${JSON.stringify(uuids)}`);
+
+  Suggest.betweenTabulated(uuids)
+  .then(tabulatedArticles => {
+      res.render('tabulatedSuggestions', tabulatedArticles);
+  }).catch(e => {
+    next(e);
   })
 });
 

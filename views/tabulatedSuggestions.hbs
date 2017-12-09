@@ -1,0 +1,56 @@
+<style>
+.date-heading {
+  white-space: nowrap;
+}
+.bucket-heading {
+  text-align:center;
+}
+.link{
+  text-decoration: none;
+}
+
+table tr, table td
+{
+    border:1px solid black;
+}
+table {
+  border-collapse: collapse;
+}
+
+</style>
+
+<h1>Tabulated Article Suggestions</h1>
+
+<h2>Given these articles as exemplars</h2>
+
+<ul>
+  {{#each tabulatedArticles.given.examples as |example|}}
+  <li><a class="link" href="{{url}}">{{title}}</a></li>
+  {{/each}}
+</ul>
+
+<p>Similarity Score = {{tabulatedArticles.given.score}}<p>
+
+<h2>Suggestions for 'similar' articles based on shared annotations and words</h2>
+<p>grouped by pubDate and similarity score (1 is best, 0 is worst)</p>
+
+<table>
+  <tr>
+    <td></td>
+    {{#each tabulatedArticles.knownBuckets as |bucket|}}
+      <td class="bucket-heading">{{bucket}}</td>
+    {{/each}}
+  </tr>
+  {{#each tabulatedArticles.tabulatedSuggestions}}
+  <tr>
+    <td class="date-heading">{{ date }}</td>
+    {{#each buckets as |bucket|}}
+      <td class="bucket">
+        {{#each bucket as |article|}}
+          [{{score}}] - <a class="link" href="{{url}}">{{title}}</a><br>
+        {{/each}}
+      </td>
+    {{/each}}
+  </tr>
+  {{/each}}
+</table>

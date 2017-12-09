@@ -103,8 +103,20 @@ const CACHE = new SimpleCache();
 
 class Signature {
   constructor( sources, annotations, wordStats ){
+    const earliestDates = sources.map( s => s.publishedDates.earliest ).sort();
+    const   latestDates = sources.map( s => s.publishedDates.latest   ).sort();
+    const earliest = earliestDates[0];
+    const   latest = latestDates[latestDates.length -1];
+    const rangeInDays = (Date.parse(latest) - Date.parse(earliest))/(1000*60*60*24);
+
     this.titles      = [].concat.apply([], sources.map(s => s.titles)); // flatten list of list of titles
     this.score       = Signature.CalcScore(annotations, wordStats),
+    this.publishedDates = {
+      earliest,
+      latest,
+      rangeInDays
+    };
+    this.uuids       = [].concat.apply([], sources.map(s => s.uuids)); // flatten list of list of uuids
     this.annotations = annotations;
     this.wordStats   = wordStats;
     this.sources     = sources;
@@ -122,11 +134,12 @@ class Signature {
       const source = {
         titles: [`${article.title}(${article.publishedDate})`],
         type: 'article',
+        uuids: [uuid],
         id: uuid,
         data: article,
-        pubishedDates: {
-          from : article.publishedDate,
-          to   : article.publishedDate,
+        publishedDates: {
+          earliest : article.publishedDate,
+          latest   : article.publishedDate,
           // range...
         }
       }
@@ -340,10 +353,17 @@ class Signature {
       const uuidPromises = uuids.map( uuid => Signature.CreateByUuid(uuid) );
 
       return Promise.all( uuidPromises )
+      .catch( err => {
+        throw err;
+      })
       .then( sigs => Signature.MergeSigs( sigs ) )
       .then( mergedSig => {
         CACHE.write(cacheKey, mergedSig);
         return mergedSig;
+      })
+      .catch( err => {
+        console.log( `ERROR: CreateByUuids: promise for uuids=${JSON.stringify(uuids)}, err=${err}`);
+        return null;
       })
       ;
   }
