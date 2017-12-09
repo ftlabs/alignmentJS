@@ -39,6 +39,14 @@ const STOP_WORDS_LIST = ["i", "a", "about", "above", "above", "across", "after",
 const STOP_WORDS = {};
 STOP_WORDS_LIST.forEach( word => { STOP_WORDS[word] = true;});
 
+const PREDICATES_TO_IGNORE = {
+  'http://www.ft.com/ontology/annotation/hasAuthor' : true,
+};
+
+const ANNOTATIONS_TO_IGNORE = {
+  "http://api.ft.com/things/9b40e89c-e87b-3d4f-b72c-2cf7511d2146": "GENRE:News",
+};
+
 function calcFreqOfNonStopWords(text){
   const minusTags = removeTags(text);
   const lowerCase = minusTags.toLowerCase();
@@ -129,6 +137,9 @@ class Signature {
       article.annotations.forEach( annotation => {
         byId[annotation.id] = annotation;
         const predicate = annotation.predicate;
+        if (ANNOTATIONS_TO_IGNORE[annotation.id] || PREDICATES_TO_IGNORE[predicate]) {
+          return;
+        }
         if (! knownPredicates.hasOwnProperty(predicate)) {
           knownPredicates[predicate] = {};
         }
