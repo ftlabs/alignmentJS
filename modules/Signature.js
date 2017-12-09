@@ -353,6 +353,9 @@ class Signature {
       const uuidPromises = uuids.map( uuid => Signature.CreateByUuid(uuid) );
 
       return Promise.all( uuidPromises )
+      .catch( err => {
+        throw err;
+      })
       .then( sigs => Signature.MergeSigs( sigs ) )
       .then( mergedSig => {
         CACHE.write(cacheKey, mergedSig);

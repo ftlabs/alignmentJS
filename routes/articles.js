@@ -146,8 +146,8 @@ router.get('/suggest/between/:uuidCsv/tabulated/display', (req, res, next) => {
   debug(`/suggest/between/:uuidCsv/tabulated/display : uuids=${JSON.stringify(uuids)}`);
 
   Suggest.betweenTabulated(uuids)
-  .then(tabulated => {
-      res.render('tabulatedSuggestions', tabulated);
+  .then(tabulatedArticles => {
+      res.render('tabulatedSuggestions', tabulatedArticles);
   }).catch(e => {
     next(e);
   })

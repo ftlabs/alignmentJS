@@ -52,11 +52,13 @@ function suggestBetween( uuids ){
     })
     .then(sigs => {
       const suggestions = sigs.filter(s => (s !== null)).map(s => {
+        const uuid = s.uuids[s.uuids.length -1];
         return {
-          score : s.score.amount,
-          uuid : s.uuids[s.uuids.length -1],
-          title : s.titles[s.titles.length -1],
+          score : Math.round(s.score.amount*100)/100,
+          uuid,
+          title : s.titles[s.titles.length -1].replace(/\(.*/, ''),
           lastPublishDateTime : s.sources[s.sources.length -1].publishedDates.earliest,
+          url : `https://www.ft.com/content/${uuid}`,
         }
       });
 
@@ -96,11 +98,34 @@ function suggestBetweenTabulated(uuids){
 
     const knownDates = Object.keys(datesScores).sort();
 
+    const tabulatedSuggestions = knownDates.map(d => {
+      return row = {
+        date : d,
+        buckets : knownBuckets.map(b => {
+          return datesScores[d][b];
+        }),
+      };
+    });
+
+    const tabulatedGiven = {
+      score : Math.round(suggestions.given.score.amount*100)/100,
+      rangeInDays : Math.round(suggestions.given.publishedDates.rangeInDays*10)/10,
+      examples : suggestions.given.titles.map( (t, i) => {
+        return {
+          title : t,
+          uuid : suggestions.given.uuids[i],
+          url : `https://www.ft.com/content/${suggestions.given.uuids[i]}`,
+        }
+      })
+    }
+
     suggestions.tabulatedArticles = {
       knownDates,
       knownBuckets,
-      datesScores
+      tabulatedSuggestions,
+      given : tabulatedGiven,
     };
+
     return suggestions;
   })
   ;

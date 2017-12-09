@@ -3,35 +3,56 @@
   white-space: nowrap;
   font-family: monospace;
 }
-.left-of-term {
-  text-align:right;
-}
-.term {
+.bucket-heading {
   text-align:center;
 }
-.right-of-term {
-  text-align:left;
-}
-.term-link{
+.link{
   text-decoration: none;
 }
+
+table tr
+{
+    border:1px solid black;
+}
+table {
+  border-collapse: collapse;
+}
+
 </style>
 
-<h1>Aligned Titles containing "{{term}}" in {{year}}</h1>
-<p class="description">{{description}}</p>
+<h1>Tabulated Article Suggestions</h1>
 
-<form>
-  term:<input type="text" name="term" value="{{term}}">
-  year:<input type="text" name="year" value="{{year}}">
-  <input type="submit" value="Submit">
-</form>
+<h2>Given these articles as exemplars</h2>
+
+<ul>
+  {{#each tabulatedArticles.given.examples as |example|}}
+  <li><a class="link" href="{{url}}">{{title}}</a></li>
+  {{/each}}
+</ul>
+
+<p>Score = {{tabulatedArticles.given.score}}<p>
+
+<h2>Suggestions for 'similar' articles based on shared annotations and words</h2>
 
 <table>
-  {{#each results}}
   <tr>
-    <td class="left-of-term">{{titleParts.[0]}}</td>
-    <td class="term"><a class="term-link" href="{{url}}">{{titleParts.[1]}}</a></td>
-    <td class="right-of-term">{{titleParts.[2]}}</td>
+    <td></td>
+    {{#each tabulatedArticles.knownBuckets as |bucket|}}
+      <td class="bucket-heading">{{bucket}}</td>
+    {{/each}}
+  </tr>
+  {{#each tabulatedArticles.tabulatedSuggestions}}
+  <tr>
+    <td>{{ date }}</td>
+    {{#each buckets as |bucket|}}
+      <td class="bucket">
+        <ul>
+        {{#each bucket as |article|}}
+          <li><a class="link" href="{{url}}">{{title}}</a> ({{score}})</li>
+        {{/each}}
+      </ul>
+      </td>
+    {{/each}}
   </tr>
   {{/each}}
 </table>
