@@ -292,13 +292,20 @@ class Signature {
 
   static CalcScore( annotations, wordStats ){
     const avgScoreFromAnnotationsAndWordStats = (annotations.score.amount + wordStats.score.amount) / 2.0;
+    const sqrtAnnotations = Math.sqrt(annotations.score.amount);
+    const sqrtWordStats   = Math.sqrt(wordStats.score.amount);
+    const avgSqrtScoreFromAnnotationsAndWordStats = (sqrtAnnotations + sqrtWordStats) / 2.0;
+
     return {
-      amount : avgScoreFromAnnotationsAndWordStats,
-      description : `avg of annotions and wordStats scores`,
+      amount : avgSqrtScoreFromAnnotationsAndWordStats,
+      description : `avg of SQRT(annotions) and SQRT(wordStats) scores`,
       details : {
         annotations : annotations.score.amount,
-        wordStats : wordStats.score.amount,
+        wordStats   : wordStats.score.amount,
         avgScoreFromAnnotationsAndWordStats,
+        sqrtAnnotations,
+        sqrtWordStats,
+        avgSqrtScoreFromAnnotationsAndWordStats,
       }
     }
   }
