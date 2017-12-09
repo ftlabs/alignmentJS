@@ -240,6 +240,7 @@ class Signature {
       predicates,
       predicateOverlapRatios,
       sumPredicateOverlapRatios,
+      avgPredicateOverlapRatio,
     };
 
     return overlap;
@@ -280,18 +281,22 @@ class Signature {
     overlap.score.details = {
       sigsNSWSizes,
       avgSigsNSWSize,
+      numOverlappingWords : overlappingNonStopWords.length,
+      ratioOverlapToAvg,
     };
 
     return overlap;
   }
 
   static CalcScore( annotations, wordStats ){
+    const avgScoreFromAnnotationsAndWordStats = (annotations.score.amount + wordStats.score.amount) / 2.0;
     return {
-      amount : (annotations.score.amount + wordStats.score.amount) / 2.0,
+      amount : avgScoreFromAnnotationsAndWordStats,
       description : `avg of annotions and wordStats scores`,
       details : {
         annotations : annotations.score.amount,
         wordStats : wordStats.score.amount,
+        avgScoreFromAnnotationsAndWordStats,
       }
     }
   }
