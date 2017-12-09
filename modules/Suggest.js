@@ -10,11 +10,13 @@ function defaultValueIfNotSet(currentVal, defaultVal){
 
 // calc date range of uuids
 // calc combined sig of articles
+// map from v2 annotations to v1 ids that work with SAPI
 // search each annotation, within date range, for uuids
 // calc sig score for each uuid with combined sig
 // group by week(?)
 // sort by score
 function suggestBetween( uuids ){
+  const combinedSig = SignaturebyUuids( uuids );
 
 }
 
