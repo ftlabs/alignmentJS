@@ -39,6 +39,14 @@ const STOP_WORDS_LIST = ["i", "a", "about", "above", "above", "across", "after",
 const STOP_WORDS = {};
 STOP_WORDS_LIST.forEach( word => { STOP_WORDS[word] = true;});
 
+const PREDICATES_TO_IGNORE = {
+  'http://www.ft.com/ontology/annotation/hasAuthor' : true,
+};
+
+const ANNOTATIONS_TO_IGNORE = {
+  "http://api.ft.com/things/9b40e89c-e87b-3d4f-b72c-2cf7511d2146": "GENRE:News",
+};
+
 function calcFreqOfNonStopWords(text){
   const minusTags = removeTags(text);
   const lowerCase = minusTags.toLowerCase();
@@ -91,148 +99,249 @@ function calcFreqOfNonStopWords(text){
   }
 }
 
-const SIGNATURE_CACHE = new SimpleCache();
+const CACHE = new SimpleCache();
 
-function signature(uuid) {
-
-  const cachedSigItem = SIGNATURE_CACHE.read( uuid );
-  if (cachedSigItem !== undefined) {
-    debug(`signature: cache hit: uuid=${uuid}}`);
-    return Promise.resolve(cachedSigItem);
+class Signature {
+  constructor( sources, annotations, wordStats, score ){
+    this.title       = sources.map(s => s.title).join('; ');
+    this.score       = score;
+    this.annotations = annotations;
+    this.wordStats   = wordStats;
+    this.sources     = sources;
   }
 
-  return Article.articleByUUID(uuid)
-  .then( article => {
-    const signature = {
-      uuid,
-      title : article.title,
-      publishedDate : article.publishedDate,
+  static CreateByUuid(uuid){
+    const cachedSig = CACHE.read( uuid );
+    if (cachedSig !== undefined) {
+      debug(`CreateByUuid: cache hit: uuid=${uuid}}`);
+      return Promise.resolve(cachedSig);
+    }
+
+    return Article.articleByUUID(uuid)
+    .then( article => {
+      const source = {
+        title: `${article.title}(${article.publishedDate})`,
+        type: 'article',
+        id: uuid,
+        data: article,
+        pubishedDates: {
+          from : article.publishedDate,
+          to   : article.publishedDate,
+          // range...
+        }
+      }
+
+      const byId = {};
+      const knownPredicates = {};
+
+      article.annotations.forEach( annotation => {
+        byId[annotation.id] = annotation;
+        const predicate = annotation.predicate;
+        if (ANNOTATIONS_TO_IGNORE[annotation.id] || PREDICATES_TO_IGNORE[predicate]) {
+          return;
+        }
+        if (! knownPredicates.hasOwnProperty(predicate)) {
+          knownPredicates[predicate] = {};
+        }
+        knownPredicates[predicate][annotation.id] = `${annotation.type}:${annotation.prefLabel}`;
+      });
+
+      const wordStats = calcFreqOfNonStopWords(article.bodyXML);
+
+      const annotations = {
+        byPredicate : knownPredicates,
+        byId,
+      }
+
+      const score = {
+        amount : 1.0,
+        description : 'default score for just one thingy',
+      };
+
+      const sig = new Signature([source], annotations, wordStats, score );
+      CACHE.write(uuid, sig);
+      return sig;
+    })
+    ;
+  }
+
+  static StopWordsList() { return STOP_WORDS_LIST; }
+
+  static CompareAnnotations( sigs ){
+    // calc overlap of annotations in each predicate
+    // then calc overlap score
+
+    const overlap = {
+      description : sigs[0].annotations.description,
+      score       : {},
+      byPredicate : {},
+      byId        : {},
     };
 
-    const byId = {};
-    const knownPredicates = {};
+    // loop over all known predicates
+    //   discard any non-overlapping predicates
+    //   loop over annotations
+    //     loop over remaining sigs
+    //       discard any non-overlapping annotions
+    //   populate non-empty predicates
 
-    article.annotations.forEach( annotation => {
-      byId[annotation.id] = annotation;
-      const predicate = annotation.predicate;
-      if (! knownPredicates.hasOwnProperty(predicate)) {
-        knownPredicates[predicate] = {};
+    const allSigsPredicates = sigs.map( s => s.annotations.byPredicate );
+    const allKnownPredicates = {};
+    allSigsPredicates.forEach( sPreds => {
+      Object.keys(sPreds).forEach( pred => {
+        allKnownPredicates[pred] = allKnownPredicates.hasOwnProperty(pred)? allKnownPredicates[pred]+1 : 1;
+      });
+    });
+    const predicates = Object.keys(allKnownPredicates);
+
+    predicates.forEach( pred  => {
+      overlap.byPredicate[pred] = {};
+      const countPredicates = allSigsPredicates.filter( s => s.hasOwnProperty(pred) );
+      if (countPredicates.length != sigs.length) {
+        return;
       }
-      knownPredicates[predicate][annotation.id] = `${annotation.type}:${annotation.prefLabel}`;
+      const overlappingAnnotationsIds = Object.keys( allSigsPredicates[0][pred] ).filter( a => {
+        const countAnnotations = allSigsPredicates.filter( s => s[pred].hasOwnProperty(a) );
+        return (countAnnotations.length === sigs.length);
+      });
+      // debug(`CompareAnnotations: overlapping predicate=${pred}, overlappingAnnotationsIds=${JSON.stringify(overlappingAnnotationsIds)}`);
+      // populate the overlap obj with this predicate
+      if (overlappingAnnotationsIds.length > 0) {
+        overlappingAnnotationsIds.forEach( annoId => {
+          overlap.byPredicate[pred][annoId] = allSigsPredicates[0][pred][annoId];
+          overlap.byId[annoId] = sigs[0].annotations.byId[annoId];
+        });
+      }
     });
 
-    signature.wordStats = calcFreqOfNonStopWords(article.bodyXML);
+    // calc score
+    // get full set of predicates across all sigs
+    // for each predicate
+    //   calc avg num annotations per sig
+    //   calc ratio of size of overlap to avg size
+    // score = calc avg ratio across all predicates
 
-    signature.annotations = {
-      byPredicate : knownPredicates,
-      byId,
-    }
+    overlap.score.description = `the avg of each predicate's overlap`;
 
-    SIGNATURE_CACHE.write(uuid, signature);
+    const predicateOverlapRatios = [];
+    predicates.forEach( pred => {
+      const numAnnotationsPerSig = allSigsPredicates.map( sp => sp.hasOwnProperty(pred)? Object.keys(sp[pred]).length : 0 );
+      const sumAnnotationsPerSig = numAnnotationsPerSig.reduce((acc, curr) => acc + curr);
+      const avgAnnotationsPerSig = sumAnnotationsPerSig / sigs.length;
+      const numOverlappingAnnotations = overlap.byPredicate.hasOwnProperty(pred)? Object.keys(overlap.byPredicate[pred]).length : 0 ;
+      const ratioOverlapToAvg = numOverlappingAnnotations / avgAnnotationsPerSig;
+      predicateOverlapRatios.push( ratioOverlapToAvg );
+    });
+    const sumPredicateOverlapRatios = predicateOverlapRatios.reduce((acc, curr) => acc + curr);
+    const avgPredicateOverlapRatio = sumPredicateOverlapRatios / predicates.length;
 
-    return signature;
-  })
-  ;
-}
-
-function compareSigPredicates( sig0, sig1 ){
-  // loop over each sig0 predicate
-  //   if sig1 has that predicate, loop over each annotation
-  //     if sig1 has that annotation, add it (and it's readable name) to the set.
-  const overlappingPredicates = {};
-  const sig0ByPredicate = sig0.annotations.byPredicate;
-  const sig1ByPredicate = sig1.annotations.byPredicate;
-  const annotationSetOverlapScores = [];
-  Object.keys(sig0ByPredicate).forEach( predicate => {
-    if (sig1ByPredicate.hasOwnProperty( predicate )) {
-      const overlappingIds = {};
-      Object.keys(sig0ByPredicate[predicate]).forEach( id => {
-        if (sig1ByPredicate[predicate].hasOwnProperty(id)) {
-          overlappingIds[id] = sig0ByPredicate[predicate][id];
-        }
-      });
-      if (Object.keys(overlappingIds).length > 0) {
-        overlappingPredicates[predicate] = overlappingIds;
-        const avgAnnotationSetSize = ( Object.keys(sig0ByPredicate[predicate]).length + Object.keys(sig1ByPredicate[predicate]).length) / 2;
-        annotationSetOverlapScores.push( Object.keys(overlappingIds).length / avgAnnotationSetSize );
-      }
-    }
-  })
-
-  const avgPredicateSetSize = (Object.keys(sig0ByPredicate).length + Object.keys(sig1ByPredicate).length)/2;
-  const sumAnnotationSetOverlapScores = annotationSetOverlapScores.reduce((acc, curr) => acc + curr);
-
-  return {
-    description : 'For each predicate (aka type of annotation), we look for the same ids (and readable name, aka type:prefLabel) in both signatures.',
-    score : sumAnnotationSetOverlapScores / avgPredicateSetSize,
-    scoreDetails : {
-      description: 'look at the number of overlapping annotations for each predicate (scaled by the avg number of annotations in that predicate), sum them, and divide by the avg num of predicates.',
-      avgPredicateSetSize,
-      annotationSetOverlapScores,
-      sumAnnotationSetOverlapScores,
-    },
-    overlaps: overlappingPredicates
-  }
-}
-
-function compareSigWords( sig0, sig1 ){
-  // look for non-StopWords shared by both sigs
-
-  const sig1aNSW = sig1.wordStats.texts.allNonStopWords;
-  const overlappingNonStopWords = sig0.wordStats.texts.allNonStopWords.filter( word => {
-    return sig1aNSW.includes(word);
-  });
-
-  const avgSetSize = (sig0.wordStats.texts.allNonStopWords.length, sig1.wordStats.texts.allNonStopWords.length)/2;
-  return {
-    description : "Looking for significance in the overlap of words.",
-    score : overlappingNonStopWords.length / avgSetSize,
-    scoreDetails : {
-      description: 'look at the proportion of the avg set size of non-StopWords which is overlapping',
-      overlappingNonStopWordsLength : overlappingNonStopWords.length,
-      avgSetSize
-    },
-    overlappingNonStopWords,
-  }
-}
-
-function compare(uuid0, uuid1){
-  const sigPromises = [signature(uuid0), signature(uuid1)];
-  return Promise.all( sigPromises )
-  .then( sigs => {
-
-    const predicates = compareSigPredicates(sigs[0], sigs[1]);
-    const words = compareSigWords(sigs[0], sigs[1])
-
-    const score = (predicates.score + words.score) / 2;
-
-    const comparison = {
-      ids : {
-        [uuid0] : `${sigs[0].title}, ${sigs[0].publishedDate}`,
-        [uuid1] : `${sigs[1].title}, ${sigs[1].publishedDate}`,
-      },
-      score,
-      scoreDetails : {
-        description : 'avg of predicates score and words score',
-      },
+    overlap.score.amount = avgPredicateOverlapRatio;
+    overlap.score.details = {
       predicates,
-      words,
-      deltas : {
-        UniqueWordsMinusStops : Math.abs( sigs[0].wordStats.count.uniqueWordsMinusStops - sigs[1].wordStats.count.uniqueWordsMinusStops ),
-        the : Math.abs( sigs[0].wordStats.count.the - sigs[1].wordStats.count.the ),
-      },
-      sigs : {
-        [uuid0] : sigs[0],
-        [uuid1] : sigs[1],
-      },
+      predicateOverlapRatios,
+      sumPredicateOverlapRatios,
+      avgPredicateOverlapRatio,
     };
 
-    return comparison;
-  })
-  ;
+    return overlap;
+  }
+
+  static CompareWordStats( sigs ){
+    const allSigsWordStats = sigs.map( s => s.wordStats );
+
+    const overlap = {
+      description : allSigsWordStats[0].description,
+      score       : {},
+      // get nonStopWords for each sig
+
+    };
+
+    // calc overlap
+    // ratio of overlap size to avg nsw set size
+
+    const sigsNSWSizes = [];
+    const allKnownNonStopWordsCounts = {};
+    allSigsWordStats.forEach( ws => {
+      const nonStopWords = ws.texts.allNonStopWords;
+      sigsNSWSizes.push( nonStopWords.length );
+      nonStopWords.forEach( w => {
+        if (! allKnownNonStopWordsCounts.hasOwnProperty(w)) {
+          allKnownNonStopWordsCounts[w] = 0;
+        }
+        allKnownNonStopWordsCounts[w] = allKnownNonStopWordsCounts[w] + 1;
+      } );
+    } );
+    const sumSigsNSWSizes = sigsNSWSizes.reduce((acc, curr) => acc + curr);
+    const avgSigsNSWSize = sumSigsNSWSizes / sigs.length;
+    const overlappingNonStopWords = Object.keys( allKnownNonStopWordsCounts ).filter( w => allKnownNonStopWordsCounts[w] == sigs.length );
+    const ratioOverlapToAvg = overlappingNonStopWords.length / avgSigsNSWSize;
+
+    overlap.texts = { allNonStopWords : overlappingNonStopWords };
+    overlap.score.amount = ratioOverlapToAvg;
+    overlap.score.details = {
+      sigsNSWSizes,
+      avgSigsNSWSize,
+      numOverlappingWords : overlappingNonStopWords.length,
+      ratioOverlapToAvg,
+    };
+
+    return overlap;
+  }
+
+  static CalcScore( annotations, wordStats ){
+    const avgScoreFromAnnotationsAndWordStats = (annotations.score.amount + wordStats.score.amount) / 2.0;
+    return {
+      amount : avgScoreFromAnnotationsAndWordStats,
+      description : `avg of annotions and wordStats scores`,
+      details : {
+        annotations : annotations.score.amount,
+        wordStats : wordStats.score.amount,
+        avgScoreFromAnnotationsAndWordStats,
+      }
+    }
+  }
+
+  static MergeSigs( sigs ){
+    const annotations = Signature.CompareAnnotations(sigs);
+    const wordStats   = Signature.CompareWordStats(sigs);
+    const score       = Signature.CalcScore(annotations, wordStats);
+
+    const sig = new Signature(sigs, annotations, wordStats, score );
+    return sig;
+  }
+
+  // take a list of uuids,
+  // and create (or look up in cache) their combined signature,
+  // by creating (or looking up in cache) the sig for each uuid,
+  // then combining them
+  static CreateByUuids( uuids ){
+      // TBD: check uuids are valid
+
+      if (uuids.length == 0) {
+        return Promise.resolve({});
+      }
+      const cacheKey = uuids.join(',');
+      const cachedUuidsItem = CACHE.read( cacheKey );
+      if (cachedUuidsItem !== undefined) {
+        debug(`createByUuids: cache hit: cacheKey=${cacheKey}}`);
+        return Promise.resolve(cachedUuidsItem);
+      } else if (uuids.length === 1) {
+        return Signature.CreateByUuid(uuid);
+      }
+
+      const uuidPromises = uuids.map( uuid => Signature.CreateByUuid(uuid) );
+
+      return Promise.all( uuidPromises )
+      .then( sigs => Signature.MergeSigs( sigs ) )
+      .then( mergedSig => {
+        CACHE.write(cacheKey, mergedSig);
+        return mergedSig;
+      })
+      ;
+  }
 }
 
 module.exports = {
-  uuid : signature,
-  compare
+  byUuids : Signature.CreateByUuids,
+  byUuid  : Signature.CreateByUuid,
 }
