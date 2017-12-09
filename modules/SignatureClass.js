@@ -95,13 +95,11 @@ const CACHE = new SimpleCache();
 
 class Signature {
   constructor( sources, annotations, wordStats, score ){
-    this.data = {
-      title : sources.map(s => s.title).join(', '),
-      sources,
-      annotations,
-      wordStats,
-      score
-    };
+    this.title       = sources.map(s => s.title).join('; ');
+    this.score       = score;
+    this.annotations = annotations;
+    this.wordStats   = wordStats;
+    this.sources     = sources;
   }
 
   static CreateByUuid(uuid){
@@ -163,7 +161,7 @@ class Signature {
     // then calc overlap score
 
     const overlap = {
-      description : sigs[0].data.annotations.description,
+      description : sigs[0].annotations.description,
       score       : {},
       byPredicate : {},
       byId        : {},
@@ -176,7 +174,7 @@ class Signature {
     //       discard any non-overlapping annotions
     //   populate non-empty predicates
 
-    const allSigsPredicates = sigs.map( s => s.data.annotations.byPredicate );
+    const allSigsPredicates = sigs.map( s => s.annotations.byPredicate );
     const allKnownPredicates = {};
     allSigsPredicates.forEach( sPreds => {
       Object.keys(sPreds).forEach( pred => {
@@ -200,7 +198,7 @@ class Signature {
       if (overlappingAnnotationsIds.length > 0) {
         overlappingAnnotationsIds.forEach( annoId => {
           overlap.byPredicate[pred][annoId] = allSigsPredicates[0][pred][annoId];
-          overlap.byId[annoId] = sigs[0].data.annotations.byId[annoId];
+          overlap.byId[annoId] = sigs[0].annotations.byId[annoId];
         });
       }
     });
@@ -237,7 +235,7 @@ class Signature {
   }
 
   static CompareWordStats( sigs ){
-    const allSigsWordStats = sigs.map( s => s.data.wordStats );
+    const allSigsWordStats = sigs.map( s => s.wordStats );
 
     const overlap = {
       description : allSigsWordStats[0].description,
