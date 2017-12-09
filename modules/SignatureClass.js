@@ -2,7 +2,7 @@
 const directly = require('../helpers/directly');
 const Article = require('./Article');
 const SimpleCache = require('../helpers/simple-cache');
-const debug = require('debug')('modules:Signature');
+const debug = require('debug')('modules:Signature2');
 
 function defaultValueIfNotSet(currentVal, defaultVal){
   return (currentVal === null || currentVal === undefined)? defaultVal : currentVal;
@@ -169,7 +169,7 @@ class Signature {
       byId        : {},
     };
 
-    // loop over sig0 predicates
+    // loop over all known predicates
     //   discard any non-overlapping predicates
     //   loop over annotations
     //     loop over remaining sigs
@@ -177,27 +177,33 @@ class Signature {
     //   populate non-empty predicates
 
     const allSigsPredicates = sigs.map( s => s.data.annotations.byPredicate );
+    const allKnownPredicates = {};
+    allSigsPredicates.forEach( sPreds => {
+      Object.keys(sPreds).forEach( pred => {
+        allKnownPredicates[pred] = allKnownPredicates.hasOwnProperty(pred)? allKnownPredicates[pred]+1 : 1;
+      });
+    });
+    const predicates = Object.keys(allKnownPredicates);
 
-    for( const pred in Object.keys( allSigsPredicates[0] ) ){
+    predicates.forEach( pred  => {
+      overlap.byPredicate[pred] = {};
       const countPredicates = allSigsPredicates.filter( s => s.hasOwnProperty(pred) );
-      if (countPredicates.length !== sigs.length) {
-        break;
+      if (countPredicates.length != sigs.length) {
+        return;
       }
       const overlappingAnnotationsIds = Object.keys( allSigsPredicates[0][pred] ).filter( a => {
-        const countAnnotations = allSigsPredicates.filter( s => s[pred].hasOwnProperty(annotation) );
-        return (countAnnotations === sigs.length);
+        const countAnnotations = allSigsPredicates.filter( s => s[pred].hasOwnProperty(a) );
+        return (countAnnotations.length === sigs.length);
       });
-
+      // debug(`CompareAnnotations: overlapping predicate=${pred}, overlappingAnnotationsIds=${JSON.stringify(overlappingAnnotationsIds)}`);
       // populate the overlap obj with this predicate
       if (overlappingAnnotationsIds.length > 0) {
-        overlap.byPredicate[pred] = {};
-
         overlappingAnnotationsIds.forEach( annoId => {
-          overlap.byPredicate[pred][annoId] = sigs[0].data.anotations.byPredicate[pred][annoId];
-          overlap.byId[annoId] = sigs[0].data.anotations.byId[annoId];
+          overlap.byPredicate[pred][annoId] = allSigsPredicates[0][pred][annoId];
+          overlap.byId[annoId] = sigs[0].data.annotations.byId[annoId];
         });
       }
-    }
+    });
 
     // calc score
     // get full set of predicates across all sigs
@@ -208,13 +214,6 @@ class Signature {
 
     overlap.score.description = `the avg of each predicate's overlap`;
 
-    const allKnownPredicates = {};
-    allSigsPredicates.forEach( sPreds => {
-      Object.keys(sPreds).forEach( pred => {
-        allKnownPredicates[pred] = true;
-      });
-    });
-    const predicates = Object.keys(allKnownPredicates);
     const predicateOverlapRatios = [];
     predicates.forEach( pred => {
       const numAnnotationsPerSig = allSigsPredicates.map( sp => sp.hasOwnProperty(pred)? Object.keys(sp[pred]).length : 0 );
