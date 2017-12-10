@@ -8,7 +8,9 @@
 .link{
   text-decoration: none;
 }
-
+.seed-list {
+  list-style: none;
+}
 table tr, table td
 {
     border:1px solid black;
@@ -19,20 +21,17 @@ table {
 
 </style>
 
-<h1>Tabulated Article Suggestions</h1>
+<h1>Tabulated Article Suggestions, {{tabulatedArticles.rangeDescription}}</h1>
 
-<h2>Given these articles as exemplars</h2>
+<h2>Given these articles as exemplars, with Similarity Score = {{tabulatedArticles.given.score}}</h2>
 
 <form>
-  <ul>
-    {{#each tabulatedArticles.given.examples as |example|}}
-    <li><input type="text" name="uuid" value="{{uuid}}"> <a class="link" href="{{url}}">{{title}}</a></li>
-    {{/each}}
-    <li><input type="text" name="uuid" value=""> <input type="submit" value="Add a UUID"></li>
-  </ul>
-</form>
-
-<p>Similarity Score = {{tabulatedArticles.given.score}}<p>
+<ul class="seed-list">
+  {{#each tabulatedArticles.given.examples as |example|}}
+  <li><input type="checkbox" name="uuid" value="{{uuid}}" checked> <a class="link" href="{{url}}">{{title}}</a></li>
+{{/each}}
+  <li><input type="text" name="uuid" value=""> <input type="submit" value="Add UUID / Update selections"></li>
+</ul>
 
 <h2>Suggestions for 'similar' articles based on shared annotations and words</h2>
 <p>grouped by pubDate and similarity score (1 is best, 0 is worst)</p>
@@ -50,10 +49,11 @@ table {
     {{#each buckets as |bucket|}}
       <td class="bucket">
         {{#each bucket as |article|}}
-          [{{score}}] - <a class="link" href="{{url}}">{{title}}</a><br>
+          <input type="checkbox" name="uuid" value="{{uuid}}">[{{score}}] - <a class="link" href="{{url}}">{{title}}</a><br>
         {{/each}}
       </td>
     {{/each}}
   </tr>
   {{/each}}
 </table>
+</form>
