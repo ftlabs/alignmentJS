@@ -139,15 +139,29 @@ router.get('/suggest/between/:uuidCsv/tabulated', (req, res, next) => {
   })
 });
 
-router.get('/suggest/between/:uuidCsv/tabulated/display', (req, res, next) => {
-  const uuidCsv = req.params.uuidCsv;
+// router.get('/suggest/between/:uuidCsv/tabulated/display', (req, res, next) => {
+//   const uuidCsv = req.params.uuidCsv;
+//
+//   const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
+//   debug(`/suggest/between/:uuidCsv/tabulated/display : uuids=${JSON.stringify(uuids)}`);
+//
+//   Suggest.betweenTabulated(uuids)
+//   .then(tabulatedArticles => {
+//       res.render('tabulatedSuggestions', tabulatedArticles);
+//   }).catch(e => {
+//     next(e);
+//   })
+// });
 
-  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
-  debug(`/suggest/between/:uuidCsv/tabulated/display : uuids=${JSON.stringify(uuids)}`);
+router.get('/suggest/between/tabulated/display', (req, res, next) => {
+  const uuidVal = (req.query.uuid !== undefined)? req.query.uuid : ['2ebe9c54-d82e-11e7-a039-c64b1c09b482','d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9'];
+  const uuidsRaw = (Array.isArray(uuidVal))? uuidVal : [uuidVal];
+  const uuids = uuidsRaw.filter(uuid => (uuid !== ''));
+  debug(`/suggest/between/tabulated/display: uuids=${JSON.stringify(uuids)}`);
 
   Suggest.betweenTabulated(uuids)
   .then(tabulatedArticles => {
-      res.render('tabulatedSuggestions', tabulatedArticles);
+      res.render('tabulatedSuggestionsWithForm', tabulatedArticles);
   }).catch(e => {
     next(e);
   })

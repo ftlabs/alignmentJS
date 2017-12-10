@@ -36,6 +36,7 @@ function suggestBetween( uuids ){
       });
       return articles;
     })
+    .then( articles => articles.filter( a => !uuids.includes(a.id) ) )
     .then( articles => {
       const promisers = articles.map( a => {
         return function() {
@@ -125,8 +126,8 @@ function suggestBetweenTabulated(uuids){
           title : t,
           uuid : suggestions.given.uuids[i],
           url : `https://www.ft.com/content/${suggestions.given.uuids[i]}`,
-        }
-      })
+        };
+      }),
     }
 
     suggestions.tabulatedArticles = {

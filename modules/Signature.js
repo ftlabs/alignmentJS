@@ -347,7 +347,7 @@ class Signature {
         debug(`createByUuids: cache hit: cacheKey=${cacheKey}}`);
         return Promise.resolve(cachedUuidsItem);
       } else if (uuids.length === 1) {
-        return Signature.CreateByUuid(uuid);
+        return Signature.CreateByUuid(uuids[0]);
       }
 
       const uuidPromises = uuids.map( uuid => Signature.CreateByUuid(uuid) );
