@@ -125,8 +125,8 @@ function suggestBetweenTabulated(uuids){
           title : t,
           uuid : suggestions.given.uuids[i],
           url : `https://www.ft.com/content/${suggestions.given.uuids[i]}`,
-        }
-      })
+        };
+      }),
     }
 
     suggestions.tabulatedArticles = {
