@@ -19,6 +19,9 @@ const SUGGEST_CONCURRENCE = defaultValueIfNotSet(process.env.SUGGEST_CONCURRENCE
 // group by week(?)
 // sort by score
 function suggestBetween( uuids ){
+  if (uuids.length == 0) {
+    uuids = ['2ebe9c54-d82e-11e7-a039-c64b1c09b482'];
+  }
   let combinedSig;
 
   return Signature.byUuids( uuids )
@@ -135,6 +138,7 @@ function suggestBetweenTabulated(uuids){
       knownBuckets : goodEnoughBuckets,
       tabulatedSuggestions,
       given : tabulatedGiven,
+      rangeDescription : 'BETWEEN the dates of the exemplar articles',
     };
 
     return suggestions;
