@@ -36,6 +36,7 @@ function suggestBetween( uuids ){
       });
       return articles;
     })
+    .then( articles => articles.filter( a => !uuids.includes(a.id) ) )
     .then( articles => {
       const promisers = articles.map( a => {
         return function() {
