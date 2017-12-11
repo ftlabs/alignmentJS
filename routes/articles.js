@@ -180,4 +180,22 @@ router.get('/searchByV2Annotation', (req, res, next) => {
   })
 });
 
+router.get('/searchByV2AnnotationsInDateRange', (req, res, next) => {
+  let urls = req.query.url;
+  if (!Array.isArray(urls)) {
+    urls = [urls];
+  }
+  const fromDate = req.query.fromdate;
+  const toDate   = req.query.todate;
+
+  Promise.all( urls.map( fetchContent.v1IdsOfV2Annotation) )
+  .then( listOfLists => [].concat.apply([], listOfLists) )
+  .then( v1Ids => [...new Set(v1Ids)])
+  .then( uniqueV1Ids => Article.searchOredV1IdsInDateRange(uniqueV1Ids, fromDate, toDate))
+  .then( response => res.json(response) )
+  .catch(e => {
+      next(e);
+  })
+});
+
 module.exports = router;

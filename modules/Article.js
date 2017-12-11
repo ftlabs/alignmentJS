@@ -123,6 +123,30 @@ function searchEntityDateRange(ontology, id, fromDate, toDate) {
     return fetchContent.search(params)
 }
 
+function searchOredV1IdsInDateRange(v1Ids, fromDate, toDate) {
+
+  fromDate = fromDate.replace(/\.\d+Z$/, 'Z');
+  toDate   =   toDate.replace(/\.\d+Z$/, 'Z');
+
+  const oredV1IdsTerm = createOredSearchTermOfV1Ids( v1Ids );
+
+  const params = {
+      queryString : ``,
+       maxResults : 100,
+           offset : 0,
+          aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+      constraints : [
+        oredV1IdsTerm,
+        `lastPublishDateTime:>${fromDate}`,
+        `lastPublishDateTime:<${toDate}`,
+      ],
+           facets : {"names":[], "maxElements":-1}
+    };
+
+    return fetchContent.search(params)
+}
+
+
 // 'ontology:VALUE' --> 'ontology:\"VALUE\"'
 function escapeV1Id( id ){
   const parts = id.split(':');
@@ -131,17 +155,18 @@ function escapeV1Id( id ){
   return `${ontology}:\"${value}\"`;
 }
 
+function createOredSearchTermOfV1Ids( v1Ids ){
+  if (v1Ids.length == 0) {
+    return '';
+  } else {
+    return (v1Ids.length == 1)? v1Ids[0] : `(${v1Ids.map(escapeV1Id).join(' OR ')})`;
+  }
+}
+
 function searchByV2Annotation(v2Annotation) {
   return fetchContent.v1IdsOfV2Annotation( v2Annotation )
-  .then( v1Ids => {
-
-    if (v1Ids.length == 0) {
-      return null;
-    }
-
-    const term = (v1Ids.length == 1)? v1Ids[0] : `(${v1Ids.map(escapeV1Id).join(' OR ')})`;
-    return searchByTerm( term );
-  })
+  .then( v1Ids => createOredSearchTermOfV1Ids(v1Ids) )
+  .then( term => searchByTerm( term ) )
   ;
 }
 
@@ -153,4 +178,5 @@ module.exports = {
     articleByUUID,
     searchEntityDateRange,
     searchByV2Annotation,
+    searchOredV1IdsInDateRange,
 }
