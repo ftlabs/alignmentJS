@@ -41,6 +41,7 @@ STOP_WORDS_LIST.forEach( word => { STOP_WORDS[word] = true;});
 
 const PREDICATES_TO_IGNORE = {
   'http://www.ft.com/ontology/annotation/hasAuthor' : true,
+  'http://www.ft.com/ontology/annotation/mentions'  : true,
 };
 
 const ANNOTATIONS_TO_IGNORE = {
