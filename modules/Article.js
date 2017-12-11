@@ -123,11 +123,24 @@ function searchEntityDateRange(ontology, id, fromDate, toDate) {
     return fetchContent.search(params)
 }
 
+// 'ontology:VALUE' --> 'ontology:\"VALUE\"'
+function escapeV1Id( id ){
+  const parts = id.split(':');
+  const ontology = parts[0];
+  const value = parts.slice(1).join(':'); // possible id might have contained 2 or more colons so needs to be unsplit?
+  return `${ontology}:\"${value}\"`;
+}
+
 function searchByV2Annotation(v2Annotation) {
   return fetchContent.v1IdsOfV2Annotation( v2Annotation )
   .then( v1Ids => {
-    const promises = v1Ids.map( searchByTerm );
-    return Promise.all( promises );
+
+    if (v1Ids.length == 0) {
+      return null;
+    }
+
+    const term = (v1Ids.length == 1)? v1Ids[0] : `(${v1Ids.map(escapeV1Id).join(' OR ')})`;
+    return searchByTerm( term );
   })
   ;
 }
