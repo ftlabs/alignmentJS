@@ -98,6 +98,15 @@ router.get('/v2v1Concordance', (req, res, next) => {
   })
 });
 
+router.get('/tmeIdOfV2Annnotation', (req, res, next) => {
+  const url = req.query.url;
+  fetchContent.tmeIdOfV2Annnotation(url).then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
 router.get('/searchEntityDateRange', (req, res, next) => {
   const ontology = req.query.ontology;
   const id       = req.query.id;
@@ -138,20 +147,6 @@ router.get('/suggest/between/:uuidCsv/tabulated', (req, res, next) => {
     next(e);
   })
 });
-
-// router.get('/suggest/between/:uuidCsv/tabulated/display', (req, res, next) => {
-//   const uuidCsv = req.params.uuidCsv;
-//
-//   const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
-//   debug(`/suggest/between/:uuidCsv/tabulated/display : uuids=${JSON.stringify(uuids)}`);
-//
-//   Suggest.betweenTabulated(uuids)
-//   .then(tabulatedArticles => {
-//       res.render('tabulatedSuggestions', tabulatedArticles);
-//   }).catch(e => {
-//     next(e);
-//   })
-// });
 
 router.get('/suggest/between/tabulated/display', (req, res, next) => {
   const uuidVal = (req.query.uuid !== undefined)? req.query.uuid : ['2ebe9c54-d82e-11e7-a039-c64b1c09b482','d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9'];
