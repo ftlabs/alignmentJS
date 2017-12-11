@@ -123,6 +123,15 @@ function searchEntityDateRange(ontology, id, fromDate, toDate) {
     return fetchContent.search(params)
 }
 
+function searchByV2Annotation(v2Annotation) {
+  return fetchContent.v1IdsOfV2Annotation( v2Annotation )
+  .then( v1Ids => {
+    const promises = v1Ids.map( searchByTerm );
+    return Promise.all( promises );
+  })
+  ;
+}
+
 module.exports = {
     searchByTerm,
     searchByParams,
@@ -130,4 +139,5 @@ module.exports = {
     alignTitlesInYear,
     articleByUUID,
     searchEntityDateRange,
+    searchByV2Annotation,
 }

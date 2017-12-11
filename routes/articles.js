@@ -98,9 +98,18 @@ router.get('/v2v1Concordance', (req, res, next) => {
   })
 });
 
-router.get('/tmeIdOfV2Annnotation', (req, res, next) => {
+router.get('/tmeIdsOfV2Annotation', (req, res, next) => {
   const url = req.query.url;
-  fetchContent.tmeIdOfV2Annnotation(url).then(body => {
+  fetchContent.tmeIdsOfV2Annotation(url).then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/v1IdsOfV2Annotation', (req, res, next) => {
+  const url = req.query.url;
+  fetchContent.v1IdsOfV2Annotation(url).then(body => {
       res.json(body);
   }).catch(e => {
       next(e);
@@ -159,6 +168,15 @@ router.get('/suggest/between/tabulated/display', (req, res, next) => {
       res.render('tabulatedSuggestionsWithForm', tabulatedArticles);
   }).catch(e => {
     next(e);
+  })
+});
+
+router.get('/searchByV2Annotation', (req, res, next) => {
+  const url = req.query.url;
+  Article.searchByV2Annotation(url)
+  .then(responses => res.json(responses) )
+  .catch(e => {
+      next(e);
   })
 });
 
