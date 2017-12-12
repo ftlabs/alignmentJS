@@ -146,6 +146,54 @@ function searchOredV1IdsInDateRange(v1Ids, fromDate, toDate) {
     return fetchContent.search(params)
 }
 
+// given a list of v2Annotations,
+// convert to a list of v1Ids,
+// searchDeeper using all the v1Ids ORed together,
+// extract all the article items
+function searchDeeperOredV2AnnotationsInDateRangeToArticleIds(v2Annotations, fromDate, toDate) {
+  fromDate = fromDate.replace(/\.\d+Z$/, 'Z');
+  toDate   =   toDate.replace(/\.\d+Z$/, 'Z');
+
+  const params = {
+      queryString : ``,
+       maxResults : 100,
+           offset : 0,
+          aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+      constraints : [
+        `lastPublishDateTime:>${fromDate}`,
+        `lastPublishDateTime:<${toDate}`,
+      ],
+           facets : {"names":[], "maxElements":-1}
+    };
+
+  return fetchContent.v1IdsOfV2Annotations(v2Annotations)
+  .then( v1Ids => createOredSearchTermOfV1Ids( v1Ids ) )
+  .then( oredV1IdsTerm => {
+    params.constraints.push(oredV1IdsTerm);
+    return fetchContent.searchDeeper(params);
+  })
+  .then( searchResultList => extractArticleIdsFromSearchResults( searchResultList ) )
+  ;
+}
+
+// loop over search result objs
+//   extract each list of results, convert to article searchItems
+// concat list of lists of article items
+function extractArticleIdsFromSearchResults( searchResultList ){
+  const articlesLists = searchResultList.map( searchResult => {
+    const results = (searchResults && searchResults.sapiObj && searchResults.sapiObj.results && searchResults.sapiObj.results[0] && searchResults.sapiObj.results[0].results)? searchResults.sapiObj.results[0].results : [];
+    const articles = results.map( r => {
+      return {
+        id : r.id,
+        title : r.title.title,
+        lastPublishDateTime : r.lifecycle.lastPublishDateTime,
+      };
+    });
+    return articles;
+  });
+  const articles = [].concat.apply([], articlesLists);
+  return articles;
+}
 
 // 'ontology:VALUE' --> 'ontology:\"VALUE\"'
 function escapeV1Id( id ){
@@ -187,4 +235,6 @@ module.exports = {
     searchByV2Annotation,
     searchOredV1IdsInDateRange,
     searchDeeperByTerm,
+    extractArticleIdsFromSearchResults,
+    searchDeeperOredV2AnnotationsInDateRangeToArticleIds,
 }

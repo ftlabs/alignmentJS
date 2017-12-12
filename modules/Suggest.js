@@ -40,20 +40,7 @@ function suggestBetween( uuids ){
       return articles;
     })
     .then( articles => articles.filter( a => !uuids.includes(a.id) ) )
-    .then( articles => {
-      const promisers = articles.map( a => {
-        return function() {
-          return Signature.byUuids( uuids.concat(a.id) )
-          .catch( err => {
-            console.log( `ERROR: getAllEntityFacets: promise for entity=${entity}, err=${err}`);
-            return;
-          })
-          ;
-        };
-      });
-
-      return directly(SUGGEST_CONCURRENCE, promisers);
-    })
+    .then( articles => calcSigsForArticlesGivenUuids(uuids, articles) )
     .then(sigs => {
       const suggestions = sigs.filter(s => (s !== null)).map(s => {
         const uuid = s.uuids[s.uuids.length -1];
@@ -80,6 +67,23 @@ function suggestBetween( uuids ){
       };
     })
   })
+}
+
+// take a list of article handles (containing id etc),
+// calc the sig for each one,
+// return promise of all sigs
+function calcSigsForArticlesGivenUuids( uuids, articles ){
+  const promisers = articles.map( a => {
+    return function() {
+      return Signature.byUuids( uuids.concat(a.id) )
+      .catch( err => {
+        console.log( `ERROR: calcSigsForArticlesGivenUuids: promise for article=${a}, err=${err}`);
+        return;
+      })
+      ;
+    };
+  });
+  return directly(SUGGEST_CONCURRENCE, promisers);
 }
 
 const IGNORE_BUCKETS_WORSE_THAN = 0.3;
