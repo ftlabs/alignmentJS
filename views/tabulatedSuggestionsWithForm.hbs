@@ -34,8 +34,12 @@ table {
 </ul>
 
 <h2>Suggestions for 'similar' articles based on shared annotations and words</h2>
-<p>grouped by pubDate and similarity score (1 is best, 0 is worst)</p>
-
+<p>Grouped by pubDate and similarity score, where 1 is best, 0 is worst. Ignore worse than: <select name="ignorebucketsworsethan">
+  {{#each tabulatedArticles.optionsForIgnoreWorseThan as |bucket|}}
+  <option value="{{value}}" {{#if selected}} selected {{/if}}>{{value}}</option>
+  {{/each}}
+</select>
+</p>
 <table>
   <tr>
     <td></td>

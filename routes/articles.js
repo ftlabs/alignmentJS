@@ -98,6 +98,35 @@ router.get('/v2v1Concordance', (req, res, next) => {
   })
 });
 
+router.get('/tmeIdsOfV2Annotation', (req, res, next) => {
+  const url = req.query.url;
+  fetchContent.tmeIdsOfV2Annotation(url).then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/v1IdsOfV2Annotation', (req, res, next) => {
+  const url = req.query.url;
+  fetchContent.v1IdsOfV2Annotation(url).then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
+router.get('/v1IdsOfV2Annotations', (req, res, next) => {
+  const url = req.query.url;
+  const urls = (Array.isArray(url))? url : [url];
+  fetchContent.v1IdsOfV2Annotations(urls)
+  .then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
 router.get('/searchEntityDateRange', (req, res, next) => {
   const ontology = req.query.ontology;
   const id       = req.query.id;
@@ -139,32 +168,59 @@ router.get('/suggest/between/:uuidCsv/tabulated', (req, res, next) => {
   })
 });
 
-// router.get('/suggest/between/:uuidCsv/tabulated/display', (req, res, next) => {
-//   const uuidCsv = req.params.uuidCsv;
-//
-//   const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
-//   debug(`/suggest/between/:uuidCsv/tabulated/display : uuids=${JSON.stringify(uuids)}`);
-//
-//   Suggest.betweenTabulated(uuids)
-//   .then(tabulatedArticles => {
-//       res.render('tabulatedSuggestions', tabulatedArticles);
-//   }).catch(e => {
-//     next(e);
-//   })
-// });
-
 router.get('/suggest/between/tabulated/display', (req, res, next) => {
   const uuidVal = (req.query.uuid !== undefined)? req.query.uuid : ['2ebe9c54-d82e-11e7-a039-c64b1c09b482','d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9'];
   const uuidsRaw = (Array.isArray(uuidVal))? uuidVal : [uuidVal];
   const uuids = uuidsRaw.filter(uuid => (uuid !== ''));
+  const ignoreBucketsWorseThan = req.query.ignorebucketsworsethan;
   debug(`/suggest/between/tabulated/display: uuids=${JSON.stringify(uuids)}`);
 
-  Suggest.betweenTabulated(uuids)
+  Suggest.betweenTabulated(uuids, ignoreBucketsWorseThan)
   .then(tabulatedArticles => {
       res.render('tabulatedSuggestionsWithForm', tabulatedArticles);
   }).catch(e => {
     next(e);
   })
 });
+
+router.get('/searchByV2Annotation', (req, res, next) => {
+  const url = req.query.url;
+  Article.searchByV2Annotation(url)
+  .then(responses => res.json(responses) )
+  .catch(e => {
+      next(e);
+  })
+});
+
+router.get('/searchByV2AnnotationsInDateRange', (req, res, next) => {
+  let urls = req.query.url;
+  if (!Array.isArray(urls)) {
+    urls = [urls];
+  }
+  const fromDate = req.query.fromdate;
+  const toDate   = req.query.todate;
+
+  Promise.all( urls.map( fetchContent.v1IdsOfV2Annotation) )
+  .then( listOfLists => [].concat.apply([], listOfLists) )
+  .then( v1Ids => [...new Set(v1Ids)])
+  .then( uniqueV1Ids => Article.searchOredV1IdsInDateRange(uniqueV1Ids, fromDate, toDate))
+  .then( response => res.json(response) )
+  .catch(e => {
+      next(e);
+  })
+});
+
+router.get('/search/deeper', (req, res, next) => {
+  const term     = req.query.term;
+  const maxDepth = req.query.maxdepth;
+  Article.searchDeeperByTerm(term, maxDepth)
+  .then(articles => {
+      res.json(articles);
+  })
+  .catch(e => {
+      next(e);
+  })
+});
+
 
 module.exports = router;

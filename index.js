@@ -1,6 +1,6 @@
 const dotenv = require('dotenv').config({ silent: process.env.NODE_ENVIRONMENT === 'production' });
 const package = require('./package.json');
-const debug = require('debug')(`${package.name}:index`);
+const debug = require('debug')(`suggest:index`);
 const express = require('express');
 const path = require('path');
 const app = express();

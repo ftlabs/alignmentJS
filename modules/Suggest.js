@@ -27,64 +27,64 @@ function suggestBetween( uuids ){
   return Signature.byUuids( uuids )
   .then( sig => {
     combinedSig = sig;
-    return Article.searchEntityDateRange('genre', 'News', sig.publishedDates.earliest, sig.publishedDates.latest)
-    .then( searchResults => {
-      const results = (searchResults && searchResults.sapiObj && searchResults.sapiObj.results && searchResults.sapiObj.results[0] && searchResults.sapiObj.results[0].results)? searchResults.sapiObj.results[0].results : [];
-      const articles = results.map( r => {
-        return {
-          id : r.id,
-          title : r.title.title,
-          lastPublishDateTime : r.lifecycle.lastPublishDateTime,
-        };
-      });
-      return articles;
-    })
-    .then( articles => articles.filter( a => !uuids.includes(a.id) ) )
-    .then( articles => {
-      const promisers = articles.map( a => {
-        return function() {
-          return Signature.byUuids( uuids.concat(a.id) )
-          .catch( err => {
-            console.log( `ERROR: getAllEntityFacets: promise for entity=${entity}, err=${err}`);
-            return;
-          })
-          ;
-        };
-      });
-
-      return directly(SUGGEST_CONCURRENCE, promisers);
-    })
-    .then(sigs => {
-      const suggestions = sigs.filter(s => (s !== null)).map(s => {
-        const uuid = s.uuids[s.uuids.length -1];
-        return {
-          score : Math.round(s.score.amount*100)/100,
-          uuid,
-          title : s.titles[s.titles.length -1].replace(/\(.*/, ''),
-          lastPublishDateTime : s.sources[s.sources.length -1].publishedDates.earliest,
-          url : `https://www.ft.com/content/${uuid}`,
-        }
-      });
-
-      suggestions.sort( (a,b) => (b.score - a.score) );
-
-      return {
-        articles : suggestions,
-        given : {
-          titles : combinedSig.titles,
-          score : combinedSig.score,
-          uuids : combinedSig.uuids,
-          publishedDates : combinedSig.publishedDates,
-        },
-        caveats : 'just searching for genre:News for now, albeit within the date range of the given uuids',
-      };
-    })
+    const v2Annotations = Object.keys(sig.annotations.byId);
+    const fromDate = sig.publishedDates.earliest;
+    const toDate   = sig.publishedDates.latest;
+    return Article.searchDeeperOredV2AnnotationsInDateRangeToArticleIds( v2Annotations, fromDate, toDate );
   })
+  .then( articles => articles.filter( a => !uuids.includes(a.id) ) )
+  .then( articles => calcSigsForArticlesGivenUuids(uuids, articles) )
+  .then( sigs => {
+    const suggestions = sigs.filter(s => (s !== null)).map(s => {
+      const uuid = s.uuids[s.uuids.length -1];
+      return {
+        score : Math.round(s.score.amount*100)/100,
+        uuid,
+        title : s.titles[s.titles.length -1].replace(/\(.*/, ''),
+        lastPublishDateTime : s.sources[s.sources.length -1].publishedDates.earliest,
+        url : `https://www.ft.com/content/${uuid}`,
+      }
+    });
+
+    suggestions.sort( (a,b) => (b.score - a.score) );
+
+    return {
+      articles : suggestions,
+      given : {
+        titles : combinedSig.titles,
+        score : combinedSig.score,
+        uuids : combinedSig.uuids,
+        publishedDates : combinedSig.publishedDates,
+      },
+      caveats : 'too many to mention: might not have scanned entire range of articles between exemplars',
+    };
+  })
+}
+
+// take a list of article handles (containing id etc),
+// calc the sig for each one,
+// return promise of all sigs
+function calcSigsForArticlesGivenUuids( uuids, articles ){
+  const promisers = articles.map( a => {
+    return function() {
+      return Signature.byUuids( uuids.concat(a.id) )
+      .catch( err => {
+        console.log( `ERROR: calcSigsForArticlesGivenUuids: promise for article=${a}, err=${err}`);
+        return;
+      })
+      ;
+    };
+  });
+  return directly(SUGGEST_CONCURRENCE, promisers);
 }
 
 const IGNORE_BUCKETS_WORSE_THAN = 0.3;
 
-function suggestBetweenTabulated(uuids){
+function suggestBetweenTabulated(uuids, ignoreBucketsWorseThan=IGNORE_BUCKETS_WORSE_THAN){
+  if (ignoreBucketsWorseThan === undefined || ignoreBucketsWorseThan == null || ignoreBucketsWorseThan === '') {
+    ignoreBucketsWorseThan=IGNORE_BUCKETS_WORSE_THAN;
+  }
+  ignoreBucketsWorseThan = parseFloat(ignoreBucketsWorseThan);
   return suggestBetween( uuids )
   .then( suggestions => {
     const datesScores = {};
@@ -110,7 +110,7 @@ function suggestBetweenTabulated(uuids){
 
     const knownDates = Object.keys(datesScores).sort();
 
-    const minBucket = (maxNonEmptyBucket > IGNORE_BUCKETS_WORSE_THAN)? IGNORE_BUCKETS_WORSE_THAN : maxNonEmptyBucket;
+    const minBucket = (maxNonEmptyBucket > ignoreBucketsWorseThan)? ignoreBucketsWorseThan : maxNonEmptyBucket;
     const goodEnoughBuckets = knownBuckets.filter( b => (b >= minBucket));
     const tabulatedSuggestions = knownDates.map(d => {
       return row = {
@@ -133,12 +133,21 @@ function suggestBetweenTabulated(uuids){
       }),
     }
 
+    const optionsForIgnoreWorseThan = knownBuckets.map( b => {
+      return {
+        value : b,
+        selected : (b === ignoreBucketsWorseThan),
+      }
+    })
+
     suggestions.tabulatedArticles = {
       knownDates,
       knownBuckets : goodEnoughBuckets,
       tabulatedSuggestions,
       given : tabulatedGiven,
       rangeDescription : 'BETWEEN the dates of the exemplar articles',
+      ignoreBucketsWorseThan,
+      optionsForIgnoreWorseThan
     };
 
     return suggestions;

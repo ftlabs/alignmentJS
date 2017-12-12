@@ -41,6 +41,7 @@ STOP_WORDS_LIST.forEach( word => { STOP_WORDS[word] = true;});
 
 const PREDICATES_TO_IGNORE = {
   'http://www.ft.com/ontology/annotation/hasAuthor' : true,
+  'http://www.ft.com/ontology/annotation/mentions'  : true,
 };
 
 const ANNOTATIONS_TO_IGNORE = {
@@ -148,11 +149,11 @@ class Signature {
       const knownPredicates = {};
 
       article.annotations.forEach( annotation => {
-        byId[annotation.id] = annotation;
         const predicate = annotation.predicate;
         if (ANNOTATIONS_TO_IGNORE[annotation.id] || PREDICATES_TO_IGNORE[predicate]) {
           return;
         }
+        byId[annotation.id] = annotation;
         if (! knownPredicates.hasOwnProperty(predicate)) {
           knownPredicates[predicate] = {};
         }

@@ -123,6 +123,108 @@ function searchEntityDateRange(ontology, id, fromDate, toDate) {
     return fetchContent.search(params)
 }
 
+function searchOredV1IdsInDateRange(v1Ids, fromDate, toDate) {
+
+  fromDate = fromDate.replace(/\.\d+Z$/, 'Z');
+  toDate   =   toDate.replace(/\.\d+Z$/, 'Z');
+
+  const oredV1IdsTerm = createOredSearchTermOfV1Ids( v1Ids );
+
+  const params = {
+      queryString : ``,
+       maxResults : 100,
+           offset : 0,
+          aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+      constraints : [
+        oredV1IdsTerm,
+        `lastPublishDateTime:>${fromDate}`,
+        `lastPublishDateTime:<${toDate}`,
+      ],
+           facets : {"names":[], "maxElements":-1}
+    };
+
+    return fetchContent.search(params)
+}
+
+// given a list of v2Annotations,
+// convert to a list of v1Ids,
+// searchDeeper using all the v1Ids ORed together,
+// extract all the article items
+function searchDeeperOredV2AnnotationsInDateRangeToArticleIds(v2Annotations, fromDate, toDate) {
+  fromDate = fromDate.replace(/\.\d+Z$/, 'Z');
+  toDate   =   toDate.replace(/\.\d+Z$/, 'Z');
+
+  const params = {
+      queryString : ``,
+       maxResults : 100,
+           offset : 0,
+          aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+      constraints : [
+        `lastPublishDateTime:>${fromDate}`,
+        `lastPublishDateTime:<${toDate}`,
+      ],
+           facets : {"names":[], "maxElements":-1}
+    };
+
+  return fetchContent.v1IdsOfV2Annotations(v2Annotations)
+  .then( v1Ids => createOredSearchTermOfV1Ids( v1Ids ) )
+  .then( oredV1IdsTerm => {
+    params.constraints.push(oredV1IdsTerm);
+    return fetchContent.searchDeeper(params);
+  })
+  .then( searchResultList => extractArticleIdsFromSearchResults( searchResultList ) )
+  ;
+}
+
+// loop over search result objs
+//   extract each list of results, convert to article searchItems
+// concat list of lists of article items
+function extractArticleIdsFromSearchResults( searchResultList ){
+  const articlesLists = searchResultList.map( searchResults => {
+    const results = (searchResults && searchResults.sapiObj && searchResults.sapiObj.results && searchResults.sapiObj.results[0] && searchResults.sapiObj.results[0].results)? searchResults.sapiObj.results[0].results : [];
+    const articles = results.map( r => {
+      return {
+        id : r.id,
+        title : r.title.title,
+        lastPublishDateTime : r.lifecycle.lastPublishDateTime,
+      };
+    });
+    return articles;
+  });
+  const articles = [].concat.apply([], articlesLists);
+  return articles;
+}
+
+// 'ontology:VALUE' --> 'ontology:\"VALUE\"'
+function escapeV1Id( id ){
+  const parts = id.split(':');
+  const ontology = parts[0];
+  const value = parts.slice(1).join(':'); // possible id might have contained 2 or more colons so needs to be unsplit?
+  return `${ontology}:\"${value}\"`;
+}
+
+function createOredSearchTermOfV1Ids( v1Ids ){
+  if (v1Ids.length == 0) {
+    return '';
+  } else {
+    return (v1Ids.length == 1)? v1Ids[0] : `(${v1Ids.map(escapeV1Id).join(' OR ')})`;
+  }
+}
+
+function searchByV2Annotation(v2Annotation) {
+  return fetchContent.v1IdsOfV2Annotation( v2Annotation )
+  .then( v1Ids => createOredSearchTermOfV1Ids(v1Ids) )
+  .then( term => searchByTerm( term ) )
+  ;
+}
+
+function searchDeeperByTerm(searchTerm, maxDepth=2) {
+  const params = {};
+	params.queryString = searchTerm;
+
+  return fetchContent.searchDeeper(params, maxDepth);
+}
+
 module.exports = {
     searchByTerm,
     searchByParams,
@@ -130,4 +232,9 @@ module.exports = {
     alignTitlesInYear,
     articleByUUID,
     searchEntityDateRange,
+    searchByV2Annotation,
+    searchOredV1IdsInDateRange,
+    searchDeeperByTerm,
+    extractArticleIdsFromSearchResults,
+    searchDeeperOredV2AnnotationsInDateRangeToArticleIds,
 }
