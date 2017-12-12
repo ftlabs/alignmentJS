@@ -198,4 +198,17 @@ router.get('/searchByV2AnnotationsInDateRange', (req, res, next) => {
   })
 });
 
+router.get('/search/deeper', (req, res, next) => {
+  const term     = req.query.term;
+  const maxDepth = req.query.maxdepth;
+  Article.searchDeeperByTerm(term, maxDepth)
+  .then(articles => {
+      res.json(articles);
+  })
+  .catch(e => {
+      next(e);
+  })
+});
+
+
 module.exports = router;

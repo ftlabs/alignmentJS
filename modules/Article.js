@@ -170,6 +170,13 @@ function searchByV2Annotation(v2Annotation) {
   ;
 }
 
+function searchDeeperByTerm(searchTerm, maxDepth=2) {
+  const params = {};
+	params.queryString = searchTerm;
+
+  return fetchContent.searchDeeper(params, maxDepth);
+}
+
 module.exports = {
     searchByTerm,
     searchByParams,
@@ -179,4 +186,5 @@ module.exports = {
     searchEntityDateRange,
     searchByV2Annotation,
     searchOredV1IdsInDateRange,
+    searchDeeperByTerm,
 }
