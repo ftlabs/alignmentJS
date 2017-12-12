@@ -116,6 +116,17 @@ router.get('/v1IdsOfV2Annotation', (req, res, next) => {
   })
 });
 
+router.get('/v1IdsOfV2Annotations', (req, res, next) => {
+  const url = req.query.url;
+  const urls = (Array.isArray(url))? url : [url];
+  fetchContent.v1IdsOfV2Annotations(urls)
+  .then(body => {
+      res.json(body);
+  }).catch(e => {
+      next(e);
+  })
+});
+
 router.get('/searchEntityDateRange', (req, res, next) => {
   const ontology = req.query.ontology;
   const id       = req.query.id;
