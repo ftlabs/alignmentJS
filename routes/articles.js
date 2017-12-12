@@ -172,9 +172,10 @@ router.get('/suggest/between/tabulated/display', (req, res, next) => {
   const uuidVal = (req.query.uuid !== undefined)? req.query.uuid : ['2ebe9c54-d82e-11e7-a039-c64b1c09b482','d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9'];
   const uuidsRaw = (Array.isArray(uuidVal))? uuidVal : [uuidVal];
   const uuids = uuidsRaw.filter(uuid => (uuid !== ''));
+  const ignoreBucketsWorseThan = req.query.ignorebucketsworsethan;
   debug(`/suggest/between/tabulated/display: uuids=${JSON.stringify(uuids)}`);
 
-  Suggest.betweenTabulated(uuids)
+  Suggest.betweenTabulated(uuids, ignoreBucketsWorseThan)
   .then(tabulatedArticles => {
       res.render('tabulatedSuggestionsWithForm', tabulatedArticles);
   }).catch(e => {

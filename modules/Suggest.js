@@ -56,7 +56,7 @@ function suggestBetween( uuids ){
         uuids : combinedSig.uuids,
         publishedDates : combinedSig.publishedDates,
       },
-      caveats : 'just searching for genre:News for now, albeit within the date range of the given uuids',
+      caveats : 'too many to mention: might not have scanned entire range of articles between exemplars',
     };
   })
 }
@@ -80,7 +80,11 @@ function calcSigsForArticlesGivenUuids( uuids, articles ){
 
 const IGNORE_BUCKETS_WORSE_THAN = 0.3;
 
-function suggestBetweenTabulated(uuids){
+function suggestBetweenTabulated(uuids, ignoreBucketsWorseThan=IGNORE_BUCKETS_WORSE_THAN){
+  if (ignoreBucketsWorseThan === undefined || ignoreBucketsWorseThan == null || ignoreBucketsWorseThan === '') {
+    ignoreBucketsWorseThan=IGNORE_BUCKETS_WORSE_THAN;
+  }
+  ignoreBucketsWorseThan = parseFloat(ignoreBucketsWorseThan);
   return suggestBetween( uuids )
   .then( suggestions => {
     const datesScores = {};
@@ -106,7 +110,7 @@ function suggestBetweenTabulated(uuids){
 
     const knownDates = Object.keys(datesScores).sort();
 
-    const minBucket = (maxNonEmptyBucket > IGNORE_BUCKETS_WORSE_THAN)? IGNORE_BUCKETS_WORSE_THAN : maxNonEmptyBucket;
+    const minBucket = (maxNonEmptyBucket > ignoreBucketsWorseThan)? ignoreBucketsWorseThan : maxNonEmptyBucket;
     const goodEnoughBuckets = knownBuckets.filter( b => (b >= minBucket));
     const tabulatedSuggestions = knownDates.map(d => {
       return row = {
@@ -129,12 +133,21 @@ function suggestBetweenTabulated(uuids){
       }),
     }
 
+    const optionsForIgnoreWorseThan = knownBuckets.map( b => {
+      return {
+        value : b,
+        selected : (b === ignoreBucketsWorseThan),
+      }
+    })
+
     suggestions.tabulatedArticles = {
       knownDates,
       knownBuckets : goodEnoughBuckets,
       tabulatedSuggestions,
       given : tabulatedGiven,
       rangeDescription : 'BETWEEN the dates of the exemplar articles',
+      ignoreBucketsWorseThan,
+      optionsForIgnoreWorseThan
     };
 
     return suggestions;
