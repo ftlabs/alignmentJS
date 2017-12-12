@@ -149,11 +149,11 @@ class Signature {
       const knownPredicates = {};
 
       article.annotations.forEach( annotation => {
-        byId[annotation.id] = annotation;
         const predicate = annotation.predicate;
         if (ANNOTATIONS_TO_IGNORE[annotation.id] || PREDICATES_TO_IGNORE[predicate]) {
           return;
         }
+        byId[annotation.id] = annotation;
         if (! knownPredicates.hasOwnProperty(predicate)) {
           knownPredicates[predicate] = {};
         }

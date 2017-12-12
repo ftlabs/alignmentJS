@@ -180,7 +180,7 @@ function searchDeeperOredV2AnnotationsInDateRangeToArticleIds(v2Annotations, fro
 //   extract each list of results, convert to article searchItems
 // concat list of lists of article items
 function extractArticleIdsFromSearchResults( searchResultList ){
-  const articlesLists = searchResultList.map( searchResult => {
+  const articlesLists = searchResultList.map( searchResults => {
     const results = (searchResults && searchResults.sapiObj && searchResults.sapiObj.results && searchResults.sapiObj.results[0] && searchResults.sapiObj.results[0].results)? searchResults.sapiObj.results[0].results : [];
     const articles = results.map( r => {
       return {

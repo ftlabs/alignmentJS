@@ -27,45 +27,37 @@ function suggestBetween( uuids ){
   return Signature.byUuids( uuids )
   .then( sig => {
     combinedSig = sig;
-    return Article.searchEntityDateRange('genre', 'News', sig.publishedDates.earliest, sig.publishedDates.latest)
-    .then( searchResults => {
-      const results = (searchResults && searchResults.sapiObj && searchResults.sapiObj.results && searchResults.sapiObj.results[0] && searchResults.sapiObj.results[0].results)? searchResults.sapiObj.results[0].results : [];
-      const articles = results.map( r => {
-        return {
-          id : r.id,
-          title : r.title.title,
-          lastPublishDateTime : r.lifecycle.lastPublishDateTime,
-        };
-      });
-      return articles;
-    })
-    .then( articles => articles.filter( a => !uuids.includes(a.id) ) )
-    .then( articles => calcSigsForArticlesGivenUuids(uuids, articles) )
-    .then(sigs => {
-      const suggestions = sigs.filter(s => (s !== null)).map(s => {
-        const uuid = s.uuids[s.uuids.length -1];
-        return {
-          score : Math.round(s.score.amount*100)/100,
-          uuid,
-          title : s.titles[s.titles.length -1].replace(/\(.*/, ''),
-          lastPublishDateTime : s.sources[s.sources.length -1].publishedDates.earliest,
-          url : `https://www.ft.com/content/${uuid}`,
-        }
-      });
-
-      suggestions.sort( (a,b) => (b.score - a.score) );
-
+    const v2Annotations = Object.keys(sig.annotations.byId);
+    const fromDate = sig.publishedDates.earliest;
+    const toDate   = sig.publishedDates.latest;
+    return Article.searchDeeperOredV2AnnotationsInDateRangeToArticleIds( v2Annotations, fromDate, toDate );
+  })
+  .then( articles => articles.filter( a => !uuids.includes(a.id) ) )
+  .then( articles => calcSigsForArticlesGivenUuids(uuids, articles) )
+  .then( sigs => {
+    const suggestions = sigs.filter(s => (s !== null)).map(s => {
+      const uuid = s.uuids[s.uuids.length -1];
       return {
-        articles : suggestions,
-        given : {
-          titles : combinedSig.titles,
-          score : combinedSig.score,
-          uuids : combinedSig.uuids,
-          publishedDates : combinedSig.publishedDates,
-        },
-        caveats : 'just searching for genre:News for now, albeit within the date range of the given uuids',
-      };
-    })
+        score : Math.round(s.score.amount*100)/100,
+        uuid,
+        title : s.titles[s.titles.length -1].replace(/\(.*/, ''),
+        lastPublishDateTime : s.sources[s.sources.length -1].publishedDates.earliest,
+        url : `https://www.ft.com/content/${uuid}`,
+      }
+    });
+
+    suggestions.sort( (a,b) => (b.score - a.score) );
+
+    return {
+      articles : suggestions,
+      given : {
+        titles : combinedSig.titles,
+        score : combinedSig.score,
+        uuids : combinedSig.uuids,
+        publishedDates : combinedSig.publishedDates,
+      },
+      caveats : 'just searching for genre:News for now, albeit within the date range of the given uuids',
+    };
   })
 }
 
