@@ -140,13 +140,17 @@ router.get('/searchEntityDateRange', (req, res, next) => {
   })
 });
 
-router.get('/suggest/between/:uuidCsv', (req, res, next) => {
-  const uuidCsv = req.params.uuidCsv;
+router.get('/suggest/between', (req, res, next) => {
+  const uuidVal = (req.query.uuid !== undefined)? req.query.uuid : ['2ebe9c54-d82e-11e7-a039-c64b1c09b482','d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9'];
+  const uuidsRaw = (Array.isArray(uuidVal))? uuidVal : [uuidVal];
+  const uuids = uuidsRaw.filter(uuid => (uuid !== ''));
+  const daysBeforeString = (req.query.daysbefore !== undefined)? req.query.daysbefore : 0;
+  const daysAfterString  = (req.query.daysafter  !== undefined)? req.query.daysafter  : 0;
+  const daysBeforeInt = parseInt(daysBeforeString);
+  const daysAfterInt  = parseInt(daysAfterString );
+  debug(`/suggest/between/:uuidCsv : uuids=${JSON.stringify(uuids)}, daysBefore=${daysBeforeInt}, daysAfter=${daysAfterInt}`);
 
-  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
-  debug(`/suggest/between/:uuidCsv : uuids=${JSON.stringify(uuids)}`);
-
-  Suggest.between(uuids)
+  Suggest.between(uuids, daysBeforeInt, daysAfterInt)
   .then(articles => {
       res.json(articles);
   }).catch(e => {
@@ -154,13 +158,18 @@ router.get('/suggest/between/:uuidCsv', (req, res, next) => {
   })
 });
 
-router.get('/suggest/between/:uuidCsv/tabulated', (req, res, next) => {
-  const uuidCsv = req.params.uuidCsv;
+router.get('/suggest/between/tabulated', (req, res, next) => {
+  const uuidVal = (req.query.uuid !== undefined)? req.query.uuid : ['2ebe9c54-d82e-11e7-a039-c64b1c09b482','d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9'];
+  const uuidsRaw = (Array.isArray(uuidVal))? uuidVal : [uuidVal];
+  const uuids = uuidsRaw.filter(uuid => (uuid !== ''));
+  const ignoreBucketsWorseThan = req.query.ignorebucketsworsethan;
+  const daysBeforeString = (req.query.daysbefore !== undefined)? req.query.daysbefore : 0;
+  const daysAfterString  = (req.query.daysafter  !== undefined)? req.query.daysafter  : 0;
+  const daysBeforeInt = parseInt(daysBeforeString);
+  const daysAfterInt  = parseInt(daysAfterString );
+  debug(`/suggest/between/:uuidCsv/tabulated : uuids=${JSON.stringify(uuids)}, daysBefore=${daysBeforeInt}, daysAfter=${daysAfterInt}`);
 
-  const uuids = (uuidCsv !== undefined && uuidCsv !== '')? uuidCsv.split(',') : [];
-  debug(`/suggest/between/:uuidCsv/tabulated : uuids=${JSON.stringify(uuids)}`);
-
-  Suggest.betweenTabulated(uuids)
+  Suggest.betweenTabulated(uuids, ignoreBucketsWorseThan, daysBeforeInt, daysAfterInt)
   .then(tabulated => {
     res.json(tabulated);
   }).catch(e => {
@@ -173,9 +182,13 @@ router.get('/suggest/between/tabulated/display', (req, res, next) => {
   const uuidsRaw = (Array.isArray(uuidVal))? uuidVal : [uuidVal];
   const uuids = uuidsRaw.filter(uuid => (uuid !== ''));
   const ignoreBucketsWorseThan = req.query.ignorebucketsworsethan;
-  debug(`/suggest/between/tabulated/display: uuids=${JSON.stringify(uuids)}`);
+  const daysBeforeString = (req.query.daysbefore !== undefined)? req.query.daysbefore : 0;
+  const daysAfterString  = (req.query.daysafter  !== undefined)? req.query.daysafter  : 0;
+  const daysBeforeInt = parseInt(daysBeforeString);
+  const daysAfterInt  = parseInt(daysAfterString );
+  debug(`/suggest/between/tabulated/display: uuids=${JSON.stringify(uuids)}, daysBefore=${daysBeforeInt}, daysAfter=${daysAfterInt}`);
 
-  Suggest.betweenTabulated(uuids, ignoreBucketsWorseThan)
+  Suggest.betweenTabulated(uuids, ignoreBucketsWorseThan, daysBeforeInt, daysAfterInt)
   .then(tabulatedArticles => {
       res.render('tabulatedSuggestionsWithForm', tabulatedArticles);
   }).catch(e => {
@@ -220,6 +233,19 @@ router.get('/search/deeper', (req, res, next) => {
   .catch(e => {
       next(e);
   })
+});
+
+router.get('/dateAddDays', (req, res, next) => {
+  const date = req.query.date;
+  const days = req.query.days;
+
+  const newDate = Suggest.addDaysToStringDate(date, days);
+
+  res.json({
+    date,
+    days,
+    newDate
+  });
 });
 
 
