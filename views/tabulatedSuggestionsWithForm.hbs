@@ -14,24 +14,49 @@
 table tr, table td
 {
     border:1px solid black;
+    padding: 5px;
 }
 table {
   border-collapse: collapse;
+}
+.no-wrap {
+  white-space: nowrap;
 }
 
 </style>
 
 <h1>Tabulated Article Suggestions, {{tabulatedArticles.rangeDescription}}</h1>
-<p>Caveats, Caveats, Caveats: does not (yet) properly scan very many articles.</p>
+<p>{{tabulatedArticles.caveats}}</p>
 <h2>Given these articles as exemplars, with Similarity Score = {{tabulatedArticles.given.score}}</h2>
 
+<div>
 <form>
-<ul class="seed-list">
+  <table>
+    <tr>
+      <td class="no-wrap" >
   {{#each tabulatedArticles.given.examples as |example|}}
-  <li><input type="checkbox" name="uuid" value="{{uuid}}" checked> <a class="link" href="{{url}}">{{title}}</a></li>
+  <input type="checkbox" name="uuid" value="{{uuid}}" checked> <a class="link" href="{{url}}">{{title}}</a><br>
 {{/each}}
-  <li><input type="text" name="uuid" value=""> <input type="submit" value="Add UUID / Update selections"></li>
-</ul>
+  <input type="text" name="uuid" value=""> <input type="submit" value="Add UUID / Update selections"><br>
+      </td>
+      <td class="no-wrap">
+<div>
+  <h3>Sig Annotations</h3>
+  <p>(shared by all the exemplars)</p>
+  {{#each tabulatedArticles.exposeSig.annotations as |anno|}}
+  {{anno}}<br>
+  {{/each}}
+</div>
+      </td>
+      <td>
+<div>
+  <h3>Sig NonStopWords</h3>
+  <p>(shared by all the exemplars)</p>
+  <p>{{tabulatedArticles.exposeSig.nonStopWordsAsString}}</p>
+</div>
+      </td>
+    </tr>
+  </table>
 
 <h2>Suggestions for 'similar' articles based on shared annotations and words</h2>
 <p>Grouped by pubDate and similarity score, where 1 is best, 0 is worst. Ignore worse than: <select name="ignorebucketsworsethan">

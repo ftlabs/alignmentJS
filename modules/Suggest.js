@@ -55,6 +55,7 @@ function suggestBetween( uuids ){
         score : combinedSig.score,
         uuids : combinedSig.uuids,
         publishedDates : combinedSig.publishedDates,
+        combinedSig,
       },
       caveats : 'too many to mention: might not have scanned entire range of articles between exemplars',
     };
@@ -140,6 +141,20 @@ function suggestBetweenTabulated(uuids, ignoreBucketsWorseThan=IGNORE_BUCKETS_WO
       }
     })
 
+    const exposeSig = {
+      annotations : [],
+      nonStopWords : [],
+    };
+
+    Object.keys(suggestions.given.combinedSig.annotations.byPredicate).forEach( pred => {
+      Object.keys(suggestions.given.combinedSig.annotations.byPredicate[pred]).forEach( anno => {
+        exposeSig.annotations.push(suggestions.given.combinedSig.annotations.byPredicate[pred][anno]);
+      });
+    });
+    exposeSig.annotationsAsString = exposeSig.annotations.join(', ');
+    exposeSig.nonStopWords = suggestions.given.combinedSig.wordStats.texts.allNonStopWords;
+    exposeSig.nonStopWordsAsString = exposeSig.nonStopWords.join(', ');
+
     suggestions.tabulatedArticles = {
       knownDates,
       knownBuckets : goodEnoughBuckets,
@@ -147,7 +162,9 @@ function suggestBetweenTabulated(uuids, ignoreBucketsWorseThan=IGNORE_BUCKETS_WO
       given : tabulatedGiven,
       rangeDescription : 'BETWEEN the dates of the exemplar articles',
       ignoreBucketsWorseThan,
-      optionsForIgnoreWorseThan
+      optionsForIgnoreWorseThan,
+      exposeSig,
+      caveats : suggestions.caveats,
     };
 
     return suggestions;
