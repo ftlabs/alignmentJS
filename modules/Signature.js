@@ -50,13 +50,16 @@ const ANNOTATIONS_TO_IGNORE = {
 
 function calcFreqOfNonStopWords(text){
   const minusTags = removeTags(text);
-  const lowerCase = minusTags.toLowerCase();
-  const minusNonAlpha = lowerCase
-      .replace(/[^a-z’\-é]/g, ' ')
-      .replace(/’s/g, '')
-      .replace(/’\s/g,  ' ')
-      ;
-  const words = minusNonAlpha.trim().split(/\s+/);
+  const words = minusTags
+    .toLowerCase()
+    .replace(/&amp;/g, '')
+    .replace(/per cent/g, 'percent')
+    .replace(/[^a-z’\-é]/g, ' ') // remove mostly non-alphabetic chars
+    .replace(/’s/g, '')
+    .replace(/’\s/g,  ' ')
+    .trim()
+    .split(/\s+/);
+
   const wordCounts = {};
   words.forEach( word => {
     wordCounts[word] = (wordCounts.hasOwnProperty(word))? wordCounts[word] + 1 : 1;
@@ -92,9 +95,6 @@ function calcFreqOfNonStopWords(text){
       allNonStopWords : uniqueWordsMinusStops,
       allWordCounts : wordCounts,
       allWords : words,
-      // lowerCase,
-      // minusNonAlpha,
-      // minusTags,
       raw: text,
     }
   }
