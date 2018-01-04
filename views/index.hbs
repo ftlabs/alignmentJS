@@ -18,10 +18,54 @@
 </ul>
 
 <h2>Suggest Stuff</h2>
+<p>These suggestions are produced as follows:<br>
 <ul>
-  <li><a href="/articles/suggest/between?uuid=2ebe9c54-d82e-11e7-a039-c64b1c09b482&uuid=d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">suggest articles</a> between 2 related articles, <a href="https://www.ft.com/content/2ebe9c54-d82e-11e7-a039-c64b1c09b482">2ebe9c54-d82e-11e7-a039-c64b1c09b482</a> and <a href="https://www.ft.com/content/d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9</a>, with <a href="https://www.ft.com/content/4ebcc00e-dbd4-11e7-a039-c64b1c09b482">4ebcc00e-dbd4-11e7-a039-c64b1c09b482</a></li>
-  <li><a href="/articles/suggest/between/tabulated?uuid=2ebe9c54-d82e-11e7-a039-c64b1c09b482&uuid=d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">suggest articles in tabulated form</a> between 2 related articles, <a href="https://www.ft.com/content/2ebe9c54-d82e-11e7-a039-c64b1c09b482">2ebe9c54-d82e-11e7-a039-c64b1c09b482</a> and <a href="https://www.ft.com/content/d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9</a></li>
-  <li><a href="/articles/suggest/between/tabulated/display?uuid=2ebe9c54-d82e-11e7-a039-c64b1c09b482&uuid=d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">display suggested articles in tabulated form</a> between 2 related articles, <a href="https://www.ft.com/content/2ebe9c54-d82e-11e7-a039-c64b1c09b482">2ebe9c54-d82e-11e7-a039-c64b1c09b482</a> and <a href="https://www.ft.com/content/d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9</a></li>
+  <li>compute the combined signature of exemplar articles</li>
+  <li>scan all articles between the earlest and latest date of the exemplar articles</li>
+  <li>plus any additional days before/after which can be specified</li>
+  <li>scores each of the scanned articles against the exemplar signature</li>
+  <li>sorts and displays the articles according to that score</li>
+  <li>The scanning can take a long time, so may come to an abrupt end without having scanned the full date range. If you refresh the page, it will keep scanning from where it left off, so you will build up a bigger picture.</li>
+</ul>
+
+You can tweak the selections of exemplars via the rendered output page.
+</p>
+
+<h3>examples</h3>
+<ul>
+  <li> JSON output
+    <ul>
+      <li><a href="/articles/suggest/between?uuid=2ebe9c54-d82e-11e7-a039-c64b1c09b482&uuid=d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">raw json</a> between 2 related articles, <a href="https://www.ft.com/content/2ebe9c54-d82e-11e7-a039-c64b1c09b482">Ireland urges Theresa May to steer clear of hard border (2ebe9c54-d82e-11e7-a039-c64b1c09b482)</a> and <a href="https://www.ft.com/content/d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">London and Dublin struggle to break Brexit stalemate (d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9)</a></li>
+      <li><a href="/articles/suggest/between/tabulated?uuid=2ebe9c54-d82e-11e7-a039-c64b1c09b482&uuid=d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">tabulated json</a> between 2 related articles, <a href="https://www.ft.com/content/2ebe9c54-d82e-11e7-a039-c64b1c09b482">Ireland urges Theresa May to steer clear of hard border (2ebe9c54-d82e-11e7-a039-c64b1c09b482)</a> and <a href="https://www.ft.com/content/d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">London and Dublin struggle to break Brexit stalemate (d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9)</a></li>
+    </ul>
+  </li>
+  <li> klunky rendered output (you have been warned)
+    <ul>
+      <li><a href="/articles/suggest/between/tabulated/display?uuid=2ebe9c54-d82e-11e7-a039-c64b1c09b482&uuid=d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">Suggestions on Brexit+Ireland</a>, given
+        <ul>
+          <li><a href="https://www.ft.com/content/2ebe9c54-d82e-11e7-a039-c64b1c09b482">Ireland urges Theresa May to steer clear of hard border (2ebe9c54-d82e-11e7-a039-c64b1c09b482)</a></li>
+          <li><a href="https://www.ft.com/content/d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9">London and Dublin struggle to break Brexit stalemate (d068d0b8-d529-11e7-8c9a-d9c0a5c8d5c9)</a></li>
+        </ul>
+      </li>
+
+      <li><a href="/articles/suggest/between/tabulated/display?uuid=ae24c6c4-df5b-11e7-a8a4-0a1e63a52f9c&uuid=dfee4a40-d826-11e7-a039-c64b1c09b482&uuid=4d298768-cb1c-11e7-aa33-c63fdc9b8c6c&uuid=&daysbefore=0&daysafter=0&ignorebucketsworsethan=0.5">Suggestions on Disney+Fox merger</a>, given
+        <ul>
+          <li><a href="https://www.ft.com/content/ae24c6c4-df5b-11e7-a8a4-0a1e63a52f9c">Disney close to $60bn deal to take over Fox assets (ae24c6c4-df5b-11e7-a8a4-0a1e63a52f9c)</a></li>
+          <li><a href="https://www.ft.com/content/dfee4a40-d826-11e7-a039-c64b1c09b482">Fox revives talks on $50bn asset sale to Disney (dfee4a40-d826-11e7-a039-c64b1c09b482)</a></li>
+          <li><a href="https://www.ft.com/content/4d298768-cb1c-11e7-aa33-c63fdc9b8c6c">Comcast and Verizon enter fray with approaches for 21st Century Fox (4d298768-cb1c-11e7-aa33-c63fdc9b8c6c)</a></li>
+        </ul>
+      </li>
+
+      <li><a href="/articles/suggest/between/tabulated/display?uuid=adfcb96e-deec-11e7-a8a4-0a1e63a52f9c&uuid=7b901c26-dbbf-11e7-a039-c64b1c09b482&uuid=69b04610-cf9f-11e7-9dbb-291a884dd8c6&daysbefore=0&daysafter=0&ignorebucketsworsethan=0.4">Suggestions on Trump+Roy Moore+Alabama Senate Election</a>, given
+        <ul>
+          <li><a href="https://www.ft.com/content/adfcb96e-deec-11e7-a8a4-0a1e63a52f9c">Trump suffers setback in Alabama Senate election (adfcb96e-deec-11e7-a8a4-0a1e63a52f9c)</a></li>
+          <li><a href="https://www.ft.com/content/7b901c26-dbbf-11e7-a039-c64b1c09b482">Roy Moore invokes a higher power in Alabama Senate race (7b901c26-dbbf-11e7-a039-c64b1c09b482)</a></li>
+          <li><a href="https://www.ft.com/content/69b04610-cf9f-11e7-9dbb-291a884dd8c6">Trump backs Roy Moore to ensure passage of tax reform (69b04610-cf9f-11e7-9dbb-291a884dd8c6)</a></li>
+        </ul>
+      </li>
+
+    </ul>
+  </li>
 </ul>
 
 <h2>Simple Search and Article look up</h2>
