@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "mocha ./test --recursive"
+    "test": "mocha ./test --recursive",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -40,12 +42,14 @@
     "rss": "^1.2.1",
     "striptags": "^2.1.1",
     "uuid": "^3.0.1",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.17",
+    "snyk": "^1.116.4"
   },
   "devDependencies": {
     "nodemon": "^1.12.1"
   },
   "engines": {
     "node": "8.9.x"
-  }
+  },
+  "snyk": true
 }
