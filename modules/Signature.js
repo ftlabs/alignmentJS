@@ -45,7 +45,7 @@ const PREDICATES_TO_IGNORE = {
 };
 
 const ANNOTATIONS_TO_IGNORE = {
-  "http://api.ft.com/things/9b40e89c-e87b-3d4f-b72c-2cf7511d2146": "GENRE:News",
+  "https://api.ft.com/things/9b40e89c-e87b-3d4f-b72c-2cf7511d2146": "GENRE:News",
 };
 
 function calcFreqOfNonStopWords(text){
