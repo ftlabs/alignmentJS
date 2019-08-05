@@ -8,7 +8,7 @@ function defaultValueIfNotSet(currentVal, defaultVal){
 
 const CAPI_CONCURRENCE = defaultValueIfNotSet(process.env.CAPI_CONCURRENCE, 4);
 const DEFAULT_TERM     = defaultValueIfNotSet(process.env.DEFAULT_TERM, 'brexit');
-const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '2019');
+const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '');
 const DEFAULT_SORTBY   = defaultValueIfNotSet(process.env.DEFAULT_SORTBY, 'position');
 const SOURCES = ['all', 'title'];
 const DEFAULT_SOURCE   = defaultValueIfNotSet(process.env.DEFAULT_SOURCE, SOURCES[0]);
