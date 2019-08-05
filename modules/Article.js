@@ -77,8 +77,8 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
       return 0;
     },
     'pre' : function(a,b){
-      const aPre = a.textParts[0].split('').reverse().join('').toLowerCase();
-      const bPre = b.textParts[0].split('').reverse().join('').toLowerCase();
+      const aPre = a.textParts[0].split(' ').reverse().join(' ').toLowerCase();
+      const bPre = b.textParts[0].split(' ').reverse().join(' ').toLowerCase();
 
       if     (aPre > bPre) { return -1; }
       else if(aPre < bPre) { return +1; }
