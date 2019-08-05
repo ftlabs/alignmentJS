@@ -17,7 +17,7 @@
 }
 </style>
 
-<h1>Aligned Titles containing "{{term}}" in {{year}}</h1>
+<h1>Aligned Search Results containing "{{term}}"</h1>
 <p class="description">{{description}}</p>
 
 <form>
@@ -28,15 +28,20 @@
       <option {{#if this.selected}} selected {{/if}}>{{this.sortBy}}</option>
     {{/each}}
   </select>
+  source:<select name="source">
+    {{#each sourcesWithSelected}}
+      <option {{#if this.selected}} selected {{/if}}>{{this.source}}</option>
+    {{/each}}
+  </select>
   <input type="submit" value="Submit">
 </form>
 
 <table>
   {{#each results}}
   <tr>
-    <td class="left-of-term">{{titleParts.[0]}}</td>
-    <td class="term"><a class="term-link" href="{{url}}">{{titleParts.[1]}}</a></td>
-    <td class="right-of-term">{{titleParts.[2]}}</td>
+    <td class="left-of-term">{{textParts.[0]}}</td>
+    <td class="term"><a class="term-link" href="{{url}}">{{textParts.[1]}}</a></td>
+    <td class="right-of-term">{{textParts.[2]}}</td>
   </tr>
   {{/each}}
 </table>

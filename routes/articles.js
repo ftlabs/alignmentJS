@@ -35,15 +35,17 @@ router.get('/alignTitlesInYear', (req, res, next) => {
   })
 });
 
-const DEFAULT_SORTBY  = (process.env.DEFAULT_SORTBY)? process.env.DEFAULT_SORTBY : 'position';
+const DEFAULT_SORTBY = (process.env.DEFAULT_SORTBY)? process.env.DEFAULT_SORTBY : 'position';
 const alignOns = ['position', 'pre', 'post'];
+const DEFAULT_SOURCE =  (process.env.DEFAULT_SOURCE)? process.env.DEFAULT_SOURCE : 'title';
 
 router.get('/alignTitlesInYear/display', (req, res, next) => {
   const term = req.query.term;
   const year = req.query.year;
   const sortBy = alignOns.includes(req.query.sortBy)? req.query.sortBy : DEFAULT_SORTBY;
+  const source = req.query.source;
 
-  Article.alignTitlesInYear(term, year, sortBy).then(results => {
+  Article.alignTitlesInYear(term, year, sortBy, source).then(results => {
     res.render('alignedTitles', results);
   }).catch(e => {
       next(e);

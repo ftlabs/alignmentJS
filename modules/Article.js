@@ -10,6 +10,8 @@ const CAPI_CONCURRENCE = defaultValueIfNotSet(process.env.CAPI_CONCURRENCE, 4);
 const DEFAULT_TERM     = defaultValueIfNotSet(process.env.DEFAULT_TERM, 'brexit');
 const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '2019');
 const DEFAULT_SORTBY   = defaultValueIfNotSet(process.env.DEFAULT_SORTBY, 'position');
+const SOURCES = ['all', 'title'];
+const DEFAULT_SOURCE   = defaultValueIfNotSet(process.env.DEFAULT_SOURCE, SOURCES[0]);
 
 function searchByTerm(searchTerm) {
     const params = {};
@@ -21,19 +23,28 @@ function searchByParams(params) {
     return fetchContent.search(params)
 }
 
-function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR) {
+function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT_SOURCE) {
 
-  const constraints = [`title:${term}`];
+  let queryString;
+  const constraints = [];
+
+  if (source === 'title') {
+    constraints.push(`title:${term}`);
+    queryString = '';
+  } else {
+    queryString = `"${term}"`;
+  }
+
   if (year) {
     constraints.push(`lastPublishDateTime:>${year}-01-01T00:00:00Z`);
     constraints.push(`lastPublishDateTime:<${year}-12-31T23:59:59Z`);
   }
 
   const params = {
-      queryString : ``,
+      queryString,
        maxResults : 100,
            offset : 0,
-          aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+          aspects : ["summary", "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
       constraints,
            facets : {"names":[], "maxElements":-1}
     };
@@ -41,41 +52,41 @@ function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR) {
     return fetchContent.search(params)
 }
 
-function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY) {
+function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY, source=DEFAULT_SOURCE) {
 
   const sortByFns = {
     'position' : function(a,b){
-      const diffLeftLength = b.titleParts[0].length - a.titleParts[0].length;
+      const diffLeftLength = b.textParts[0].length - a.textParts[0].length;
       if (diffLeftLength !== 0) {
         return diffLeftLength;
       }
-      const aLeftLower = a.titleParts[0].toLowerCase();
-      const bLeftLower = b.titleParts[0].toLowerCase();
+      const aLeftLower = a.textParts[0].toLowerCase();
+      const bLeftLower = b.textParts[0].toLowerCase();
       if (aLeftLower !== bLeftLower) {
         return (aLeftLower < bLeftLower)? -1 : 1;
       }
-      const diffRightLength = a.titleParts[2].length - b.titleParts[2].length;
+      const diffRightLength = a.textParts[2].length - b.textParts[2].length;
       if (diffRightLength !== 0) {
         return diffRightLength;
       }
-      const aRightLower = a.titleParts[2].toLowerCase();
-      const bRightLower = b.titleParts[2].toLowerCase();
+      const aRightLower = a.textParts[2].toLowerCase();
+      const bRightLower = b.textParts[2].toLowerCase();
       if (aRightLower !== bRightLower) {
         return (aRightLower < bRightLower)? -1 : 1;
       }
       return 0;
     },
     'pre' : function(a,b){
-      const aPre = a.titleParts[0].split('').reverse().join('').toLowerCase();
-      const bPre = b.titleParts[0].split('').reverse().join('').toLowerCase();
+      const aPre = a.textParts[0].split('').reverse().join('').toLowerCase();
+      const bPre = b.textParts[0].split('').reverse().join('').toLowerCase();
 
       if     (aPre > bPre) { return -1; }
       else if(aPre < bPre) { return +1; }
       else                 { return  0; }
     },
     'post' : function(a,b){
-      const aPost = a.titleParts[2].split().reverse().join('').toLowerCase();
-      const bPost = b.titleParts[2].split().reverse().join('').toLowerCase();
+      const aPost = a.textParts[2].split().reverse().join('').toLowerCase();
+      const bPost = b.textParts[2].split().reverse().join('').toLowerCase();
 
       if     (aPost > bPost) { return -1; }
       else if(aPost < bPost) { return +1; }
@@ -89,7 +100,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
 
   const sortByFn = sortByFns[sortBy];
 
-  return searchTitlesInYear(term, year)
+  return searchTitlesInYear(term, year, source)
   .then(articles => {
     const results = (articles && articles.sapiObj && articles.sapiObj.results && articles.sapiObj.results[0] && articles.sapiObj.results[0].results)? articles.sapiObj.results[0].results : [];
     // const regexStr = `^(.*?)\b(${searchterm})\b(.*)`;
@@ -97,18 +108,18 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
     const regex = new RegExp(regexStr, 'i');
     // debug(`alignTitlesInYear: regexStr=${JSON.stringify(regexStr)}`);
     return results.map( result => {
-      const title = result.title.title;
-      const match = regex.exec(title);
+      const text = (source === 'title')? result.title.title : result.summary.excerpt;
+      const match = regex.exec(text);
       // debug(`alignTitlesInYear: title=${title}, match=${JSON.stringify(match)}`);
       return {
-        title,
-        titleParts : (match)? [match[1], match[2], match[3]] : [],
+        text,
+        textParts : (match)? [match[1], match[2], match[3]] : [],
         id         : result.id,
         aspectSet  : result.aspectSet,
         url        : `https://www.ft.com/content/${result.id}`,
         lastPublishDateTime : result.lifecycle.lastPublishDateTime,
       }
-    }).filter(result => result.titleParts.length > 0);
+    }).filter(result => result.textParts.length > 0);
   }).then(results => {
     results.sort(sortByFn);
 
@@ -122,6 +133,14 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
         return {
           sortBy: sb,
           selected : (sb === sortBy),
+        }
+      }),
+      source,
+      sources: SOURCES,
+      sourcesWithSelected : SOURCES.map( s => {
+        return {
+          source: s,
+          selected : (s === source),
         }
       }),
       results
