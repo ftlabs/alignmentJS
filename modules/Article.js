@@ -116,6 +116,12 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
       year,
       sortBy,
       sortBys : Object.keys( sortByFns ),
+      sortBysWithSelected : Object.keys( sortByFns ).map( sb => {
+        return {
+          sortBy: sb,
+          selected : (sb === sortBy),
+        }
+      }),
       results
     }
   })
