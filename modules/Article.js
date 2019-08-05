@@ -23,16 +23,18 @@ function searchByParams(params) {
 
 function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR) {
 
+  const constraints = [`title:${term}`];
+  if (year) {
+    constraints.push(`lastPublishDateTime:>${year}-01-01T00:00:00Z`);
+    constraints.push(`lastPublishDateTime:<${year}-12-31T23:59:59Z`);
+  }
+
   const params = {
       queryString : ``,
        maxResults : 100,
            offset : 0,
           aspects : [ "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
-      constraints : [
-        `title:${term}`,
-        `lastPublishDateTime:>${year}-01-01T00:00:00Z`,
-        `lastPublishDateTime:<${year}-12-31T23:59:59Z`,
-      ],
+      constraints,
            facets : {"names":[], "maxElements":-1}
     };
 
