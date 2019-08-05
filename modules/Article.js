@@ -8,7 +8,8 @@ function defaultValueIfNotSet(currentVal, defaultVal){
 
 const CAPI_CONCURRENCE = defaultValueIfNotSet(process.env.CAPI_CONCURRENCE, 4);
 const DEFAULT_TERM     = defaultValueIfNotSet(process.env.DEFAULT_TERM, 'brexit');
-const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '2017');
+const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '2019');
+const DEFAULT_SORTBY   = defaultValueIfNotSet(process.env.DEFAULT_SORTBY, 'position');
 
 function searchByTerm(searchTerm) {
     const params = {};
@@ -20,9 +21,7 @@ function searchByParams(params) {
     return fetchContent.search(params)
 }
 
-function searchTitlesInYear(term, year) {
-  term = defaultValueIfNotSet(term, DEFAULT_TERM);
-  year = defaultValueIfNotSet(year, DEFAULT_YEAR);
+function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR) {
 
   const params = {
       queryString : ``,
@@ -40,9 +39,53 @@ function searchTitlesInYear(term, year) {
     return fetchContent.search(params)
 }
 
-function alignTitlesInYear(term, year) {
-  term = defaultValueIfNotSet(term, DEFAULT_TERM);
-  year = defaultValueIfNotSet(year, DEFAULT_YEAR);
+function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY) {
+
+  const sortByFns = {
+    'position' : function(a,b){
+      const diffLeftLength = b.titleParts[0].length - a.titleParts[0].length;
+      if (diffLeftLength !== 0) {
+        return diffLeftLength;
+      }
+      const aLeftLower = a.titleParts[0].toLowerCase();
+      const bLeftLower = b.titleParts[0].toLowerCase();
+      if (aLeftLower !== bLeftLower) {
+        return (aLeftLower < bLeftLower)? -1 : 1;
+      }
+      const diffRightLength = a.titleParts[2].length - b.titleParts[2].length;
+      if (diffRightLength !== 0) {
+        return diffRightLength;
+      }
+      const aRightLower = a.titleParts[2].toLowerCase();
+      const bRightLower = b.titleParts[2].toLowerCase();
+      if (aRightLower !== bRightLower) {
+        return (aRightLower < bRightLower)? -1 : 1;
+      }
+      return 0;
+    },
+    'pre' : function(a,b){
+      const aPre = a.titleParts[0].split('').reverse().join('').toLowerCase();
+      const bPre = b.titleParts[0].split('').reverse().join('').toLowerCase();
+
+      if     (aPre > bPre) { return -1; }
+      else if(aPre < bPre) { return +1; }
+      else                 { return  0; }
+    },
+    'post' : function(a,b){
+      const aPost = a.titleParts[2].split().reverse().join('').toLowerCase();
+      const bPost = b.titleParts[2].split().reverse().join('').toLowerCase();
+
+      if     (aPost > bPost) { return -1; }
+      else if(aPost < bPost) { return +1; }
+      else                   { return  0; }
+    },
+  }
+
+  if (! sortByFns.hasOwnProperty(sortBy)) {
+    throw new Error(`ERROR: sortBy value not recognised : ${JSON.stringify(sortBy)}`);
+  }
+
+  const sortByFn = sortByFns[sortBy];
 
   return searchTitlesInYear(term, year)
   .then(articles => {
@@ -65,32 +108,14 @@ function alignTitlesInYear(term, year) {
       }
     }).filter(result => result.titleParts.length > 0);
   }).then(results => {
-    results.sort((a,b) => {
-      const diffLeftLength = b.titleParts[0].length - a.titleParts[0].length;
-      if (diffLeftLength !== 0) {
-        return diffLeftLength;
-      }
-      const aLeftLower = a.titleParts[0].toLowerCase();
-      const bLeftLower = b.titleParts[0].toLowerCase();
-      if (aLeftLower !== bLeftLower) {
-        return (aLeftLower < bLeftLower)? -1 : 1;
-      }
-      const diffRightLength = a.titleParts[2].length - b.titleParts[2].length;
-      if (diffRightLength !== 0) {
-        return diffRightLength;
-      }
-      const aRightLower = a.titleParts[2].toLowerCase();
-      const bRightLower = b.titleParts[2].toLowerCase();
-      if (aRightLower !== bRightLower) {
-        return (aRightLower < bRightLower)? -1 : 1;
-      }
-      return 0;
-    });
+    results.sort(sortByFn);
 
     return {
-      description : 'articles with titles matching the specified term in the specified year; titles are then split and aligned on the term, and sorted by length of text before the term.',
+      description : `articles with titles matching the specified term in the specified year; titles are then split and aligned on the term, and sorted by ${sortBy}.`,
       term,
       year,
+      sortBy,
+      sortBys : Object.keys( sortByFns ),
       results
     }
   })
