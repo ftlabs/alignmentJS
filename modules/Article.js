@@ -109,7 +109,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
     // debug(`alignTitlesInYear: regexStr=${JSON.stringify(regexStr)}`);
     return results.map( result => {
       const text = (source === 'title')? result.title.title : result.summary.excerpt;
-      const match = regex.exec(text);
+      const match = regex.exec(text.replace(/\.\.\./g, ' ... '));
       // debug(`alignTitlesInYear: title=${title}, match=${JSON.stringify(match)}`);
       return {
         text,
@@ -124,7 +124,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
     results.sort(sortByFn);
 
     return {
-      description : `articles with titles matching the specified term in the specified year; titles are then split and aligned on the term, and sorted by ${sortBy}.`,
+      description : `Looking for articles matching the specified term; the matching texts are then split and aligned on the term, and sorted by ${sortBy}. You can constrain the source to be just the titles, and the sort can be by position (to look swooshy), or the 'post' column, or the 'pre' column (NB, in that case, sorted by whole words from the RHS to LHS). `,
       term,
       year,
       sortBy,
