@@ -6,8 +6,6 @@ patch:
   SNYK-JS-LODASH-450202:
     - hbs > handlebars > async > lodash:
         patched: '2019-07-04T13:33:12.294Z'
-      snyk > lodash:
-        patched: '2019-07-04T13:34:26.037Z'
     - snyk > snyk-nuget-plugin > lodash:
         patched: '2019-07-04T13:34:26.037Z'
     - snyk > snyk-nodejs-lockfile-parser > lodash:
@@ -27,4 +25,6 @@ patch:
     - snyk > snyk-php-plugin > @snyk/composer-lockfile-parser > lodash:
         patched: '2019-07-04T13:34:26.037Z'
     - snyk > inquirer > lodash:
+        patched: '2019-07-04T13:34:26.037Z'
+    - snyk > lodash:
         patched: '2019-07-04T13:34:26.037Z'
