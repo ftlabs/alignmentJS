@@ -12,6 +12,7 @@ const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '');
 const DEFAULT_SORTBY   = defaultValueIfNotSet(process.env.DEFAULT_SORTBY, 'position');
 const SOURCES = ['all', 'title'];
 const DEFAULT_SOURCE   = defaultValueIfNotSet(process.env.DEFAULT_SOURCE, SOURCES[0]);
+const DEFAULT_MAX_DEPTH = defaultValueIfNotSet(process.env.DEFAULT_MAX_DEPTH, 4);
 
 function searchByTerm(searchTerm) {
     const params = {};
@@ -50,6 +51,35 @@ function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT
     };
 
     return fetchContent.search(params)
+}
+
+function searchDeeperTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT_SOURCE, maxDepth=DEFAULT_MAX_DEPTH) {
+
+  let queryString;
+  const constraints = [];
+
+  if (source === 'title') {
+    constraints.push(`title:${term}`);
+    queryString = '';
+  } else {
+    queryString = `"${term}"`;
+  }
+
+  if (year) {
+    constraints.push(`lastPublishDateTime:>${year}-01-01T00:00:00Z`);
+    constraints.push(`lastPublishDateTime:<${year}-12-31T23:59:59Z`);
+  }
+
+  const params = {
+      queryString,
+       maxResults : 100,
+           offset : 0,
+          aspects : ["summary", "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+      constraints,
+           facets : {"names":[], "maxElements":-1}
+    };
+
+    return fetchContent.searchDeeper(params)
 }
 
 function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY, source=DEFAULT_SOURCE) {
@@ -101,11 +131,15 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
   const sortByFn = sortByFns[sortBy];
   const counts = {};
 
-  return searchTitlesInYear(term, year, source)
-  .then(articles => {
-    const results = (articles && articles.sapiObj && articles.sapiObj.results && articles.sapiObj.results[0] && articles.sapiObj.results[0].results)? articles.sapiObj.results[0].results : [];
-    counts.indexCount = articles.sapiObj.results[0].indexCount;
-    counts.maxResults = articles.sapiObj.query.resultContext.maxResults;
+  return searchDeeperTitlesInYear(term, year, source)
+  .then(searchItems => {
+    const firstSearchItem = searchItems[0];
+    let results = [];
+    searchItems.forEach( searchItem => {
+      results = results.concat( (searchItem && searchItem.sapiObj && searchItem.sapiObj.results && searchItem.sapiObj.results[0] && searchItem.sapiObj.results[0].results)? searchItem.sapiObj.results[0].results : [] );
+    });
+    counts.indexCount = firstSearchItem.sapiObj.results[0].indexCount;
+    counts.maxResults = firstSearchItem.sapiObj.query.resultContext.maxResults;
     counts.results    = results.length;
 
     // const regexStr = `^(.*?)\b(${searchterm})\b(.*)`;
