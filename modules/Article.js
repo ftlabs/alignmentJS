@@ -107,7 +107,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
     counts.indexCount = articles.sapiObj.results[0].indexCount;
     counts.maxResults = articles.sapiObj.query.resultContext.maxResults;
     counts.results    = results.length;
-    
+
     // const regexStr = `^(.*?)\b(${searchterm})\b(.*)`;
     const regexStr = `^(.*?)\\b(${term})\\b(.*)`;
     const regex = new RegExp(regexStr, 'i');
@@ -118,16 +118,25 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
       // debug(`alignTitlesInYear: title=${title}, match=${JSON.stringify(match)}`);
       return {
         text,
-        textParts : (match)? [match[1], match[2], match[3]] : [],
+        textParts  : (match)? [match[1], match[2], match[3]] : [],
         id         : result.id,
         aspectSet  : result.aspectSet,
         url        : `https://www.ft.com/content/${result.id}`,
         lastPublishDateTime : result.lifecycle.lastPublishDateTime,
+        year       : result.lifecycle.lastPublishDateTime.split('-')[0],
       }
     }).filter(result => result.textParts.length > 0);
   }).then(results => {
     results.sort(sortByFn);
     counts.filteredResults = results.length;
+    const years = Array.from(new Set(results.map(r => r.year))).sort().reverse();
+    const resultsGroupedByYear = [];
+    years.forEach( year => {
+      resultsGroupedByYear.push( {
+        year,
+        results: results.filter( r => r.year === year )
+      });
+    });
 
     return {
       description : `Looking for articles matching the specified term; the matching texts are then split and aligned on the term, and sorted by ${sortBy}. You can constrain the source to be just the titles, and the sort can be by position (to look swooshy), or the 'post' column, or the 'pre' column (NB, in that case, sorted by whole words from the RHS to LHS). `,
@@ -150,7 +159,9 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
         }
       }),
       counts,
-      results
+      years,
+      results,
+      resultsGroupedByYear
     }
   })
   ;

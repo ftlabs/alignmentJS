@@ -46,3 +46,17 @@
   </tr>
   {{/each}}
 </table>
+
+<h2>Grouped by Year</h2>
+<table>
+  {{#each resultsGroupedByYear}}
+  <tr><td><BR>{{year}}</td></tr>
+    {{#each results}}
+    <tr>
+      <td class="left-of-term">{{textParts.[0]}}</td>
+      <td class="term"><a class="term-link" href="{{url}}">{{textParts.[1]}}</a></td>
+      <td class="right-of-term">{{textParts.[2]}}</td>
+    </tr>
+    {{/each}}
+  {{/each}}
+</table>
