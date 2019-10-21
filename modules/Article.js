@@ -99,10 +99,15 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
   }
 
   const sortByFn = sortByFns[sortBy];
+  const counts = {};
 
   return searchTitlesInYear(term, year, source)
   .then(articles => {
     const results = (articles && articles.sapiObj && articles.sapiObj.results && articles.sapiObj.results[0] && articles.sapiObj.results[0].results)? articles.sapiObj.results[0].results : [];
+    counts.indexCount = articles.sapiObj.results[0].indexCount;
+    counts.maxResults = articles.sapiObj.query.resultContext.maxResults;
+    counts.results    = results.length;
+    
     // const regexStr = `^(.*?)\b(${searchterm})\b(.*)`;
     const regexStr = `^(.*?)\\b(${term})\\b(.*)`;
     const regex = new RegExp(regexStr, 'i');
@@ -122,6 +127,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
     }).filter(result => result.textParts.length > 0);
   }).then(results => {
     results.sort(sortByFn);
+    counts.filteredResults = results.length;
 
     return {
       description : `Looking for articles matching the specified term; the matching texts are then split and aligned on the term, and sorted by ${sortBy}. You can constrain the source to be just the titles, and the sort can be by position (to look swooshy), or the 'post' column, or the 'pre' column (NB, in that case, sorted by whole words from the RHS to LHS). `,
@@ -143,6 +149,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
           selected : (s === source),
         }
       }),
+      counts,
       results
     }
   })
