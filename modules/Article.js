@@ -12,6 +12,8 @@ const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '');
 const DEFAULT_SORTBY   = defaultValueIfNotSet(process.env.DEFAULT_SORTBY, 'position');
 const SOURCES = ['all', 'title'];
 const DEFAULT_SOURCE   = defaultValueIfNotSet(process.env.DEFAULT_SOURCE, SOURCES[0]);
+const DEFAULT_MAXDEPTH = parseInt( defaultValueIfNotSet(process.env.DEFAULT_MAXDEPTH, 4), 10);
+const DEFAULT_MAX_MAXDEPTH = parseInt( defaultValueIfNotSet(process.env.DEFAULT_MAX_MAXDEPTH, 20), 10);
 
 function searchByTerm(searchTerm) {
     const params = {};
@@ -52,7 +54,42 @@ function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT
     return fetchContent.search(params)
 }
 
-function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY, source=DEFAULT_SOURCE) {
+function searchDeeperTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT_SOURCE, maxDepth=DEFAULT_MAXDEPTH) {
+
+  let queryString;
+  const constraints = [];
+
+  if (source === 'title') {
+    constraints.push(`title:${term}`);
+    queryString = '';
+  } else {
+    queryString = `"${term}"`;
+  }
+
+  if (year) {
+    constraints.push(`lastPublishDateTime:>${year}-01-01T00:00:00Z`);
+    constraints.push(`lastPublishDateTime:<${year}-12-31T23:59:59Z`);
+  }
+
+  const params = {
+      queryString,
+       maxResults : 100,
+           offset : 0,
+          aspects : ["summary", "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
+      constraints,
+           facets : {"names":[], "maxElements":-1}
+    };
+
+    return fetchContent.searchDeeper(params, maxDepth)
+}
+
+function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY, source=DEFAULT_SOURCE, maxDepth=DEFAULT_MAXDEPTH) {
+
+  maxDepth = parseInt( maxDepth, 10 );
+
+  if (maxDepth < 1 || maxDepth > DEFAULT_MAX_MAXDEPTH) {
+    maxDepth = DEFAULT_MAXDEPTH;
+  }
 
   const sortByFns = {
     'position' : function(a,b){
@@ -99,10 +136,19 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
   }
 
   const sortByFn = sortByFns[sortBy];
+  const counts = {};
 
-  return searchTitlesInYear(term, year, source)
-  .then(articles => {
-    const results = (articles && articles.sapiObj && articles.sapiObj.results && articles.sapiObj.results[0] && articles.sapiObj.results[0].results)? articles.sapiObj.results[0].results : [];
+  return searchDeeperTitlesInYear(term, year, source, maxDepth)
+  .then(searchItems => {
+    const firstSearchItem = searchItems[0];
+    let results = [];
+    searchItems.forEach( searchItem => {
+      results = results.concat( (searchItem && searchItem.sapiObj && searchItem.sapiObj.results && searchItem.sapiObj.results[0] && searchItem.sapiObj.results[0].results)? searchItem.sapiObj.results[0].results : [] );
+    });
+    counts.indexCount = firstSearchItem.sapiObj.results[0].indexCount;
+    counts.maxResults = firstSearchItem.sapiObj.query.resultContext.maxResults;
+    counts.results    = results.length;
+
     // const regexStr = `^(.*?)\b(${searchterm})\b(.*)`;
     const regexStr = `^(.*?)\\b(${term})\\b(.*)`;
     const regex = new RegExp(regexStr, 'i');
@@ -113,21 +159,32 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
       // debug(`alignTitlesInYear: title=${title}, match=${JSON.stringify(match)}`);
       return {
         text,
-        textParts : (match)? [match[1], match[2], match[3]] : [],
+        textParts  : (match)? [match[1], match[2], match[3]] : [],
         id         : result.id,
         aspectSet  : result.aspectSet,
         url        : `https://www.ft.com/content/${result.id}`,
         lastPublishDateTime : result.lifecycle.lastPublishDateTime,
+        year       : result.lifecycle.lastPublishDateTime.split('-')[0],
       }
     }).filter(result => result.textParts.length > 0);
   }).then(results => {
     results.sort(sortByFn);
+    counts.filteredResults = results.length;
+    const years = Array.from(new Set(results.map(r => r.year))).sort().reverse();
+    const resultsGroupedByYear = [];
+    years.forEach( year => {
+      resultsGroupedByYear.push( {
+        year,
+        results: results.filter( r => r.year === year )
+      });
+    });
 
     return {
       description : `Looking for articles matching the specified term; the matching texts are then split and aligned on the term, and sorted by ${sortBy}. You can constrain the source to be just the titles, and the sort can be by position (to look swooshy), or the 'post' column, or the 'pre' column (NB, in that case, sorted by whole words from the RHS to LHS). `,
       term,
       year,
       sortBy,
+      maxDepth,
       sortBys : Object.keys( sortByFns ),
       sortBysWithSelected : Object.keys( sortByFns ).map( sb => {
         return {
@@ -143,7 +200,10 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
           selected : (s === source),
         }
       }),
-      results
+      counts,
+      years,
+      results,
+      resultsGroupedByYear
     }
   })
   ;

@@ -19,10 +19,16 @@
 
 <h1>Aligned Search Results containing "{{term}}"</h1>
 <p class="description">{{description}}</p>
+<p class="description">({{counts.filteredResults}} filtered from {{counts.results}}, out of a total of {{counts.indexCount}})</p>
+<p class="description">Also, <a href="#grouped-by-year">Grouped by Year</a>:
+  {{#each years}}
+  <a href="#{{this}}">{{this}}</a>,
+  {{/each}}
+</p>
 
 <form>
   term:<input type="text" name="term" value="{{term}}">
-  year:<input type="text" name="year" value="{{year}}">
+  year:<input type="text" name="year" value="{{year}}" size="4">
   sortBy:<select name="sortBy">
     {{#each sortBysWithSelected}}
       <option {{#if this.selected}} selected {{/if}}>{{this.sortBy}}</option>
@@ -33,6 +39,7 @@
       <option {{#if this.selected}} selected {{/if}}>{{this.source}}</option>
     {{/each}}
   </select>
+  maxDepth:<input type="text" name="maxdepth" value="{{maxDepth}}" size="2">
   <input type="submit" value="Submit">
 </form>
 
@@ -43,5 +50,19 @@
     <td class="term"><a class="term-link" href="{{url}}">{{textParts.[1]}}</a></td>
     <td class="right-of-term">{{textParts.[2]}}</td>
   </tr>
+  {{/each}}
+</table>
+
+<h2 id="grouped-by-year">Grouped by Year</h2>
+<table>
+  {{#each resultsGroupedByYear}}
+  <tr><td id="{{year}}"><BR>{{year}}</td></tr>
+    {{#each results}}
+    <tr>
+      <td class="left-of-term">{{textParts.[0]}}</td>
+      <td class="term"><a class="term-link" href="{{url}}">{{textParts.[1]}}</a></td>
+      <td class="right-of-term">{{textParts.[2]}}</td>
+    </tr>
+    {{/each}}
   {{/each}}
 </table>

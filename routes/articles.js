@@ -44,8 +44,9 @@ router.get('/alignTitlesInYear/display', (req, res, next) => {
   const year = req.query.year;
   const sortBy = alignOns.includes(req.query.sortBy)? req.query.sortBy : DEFAULT_SORTBY;
   const source = req.query.source;
+  const maxDepth = req.query.maxdepth;
 
-  Article.alignTitlesInYear(term, year, sortBy, source).then(results => {
+  Article.alignTitlesInYear(term, year, sortBy, source, maxDepth).then(results => {
     res.render('alignedTitles', results);
   }).catch(e => {
       next(e);
