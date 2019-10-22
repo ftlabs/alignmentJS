@@ -12,7 +12,8 @@ const DEFAULT_YEAR     = defaultValueIfNotSet(process.env.DEFAULT_YEAR, '');
 const DEFAULT_SORTBY   = defaultValueIfNotSet(process.env.DEFAULT_SORTBY, 'position');
 const SOURCES = ['all', 'title'];
 const DEFAULT_SOURCE   = defaultValueIfNotSet(process.env.DEFAULT_SOURCE, SOURCES[0]);
-const DEFAULT_MAX_DEPTH = defaultValueIfNotSet(process.env.DEFAULT_MAX_DEPTH, 4);
+const DEFAULT_MAXDEPTH = parseInt( defaultValueIfNotSet(process.env.DEFAULT_MAXDEPTH, 4), 10);
+const DEFAULT_MAX_MAXDEPTH = parseInt( defaultValueIfNotSet(process.env.DEFAULT_MAX_MAXDEPTH, 20), 10);
 
 function searchByTerm(searchTerm) {
     const params = {};
@@ -53,7 +54,7 @@ function searchTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT
     return fetchContent.search(params)
 }
 
-function searchDeeperTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT_SOURCE, maxDepth=DEFAULT_MAX_DEPTH) {
+function searchDeeperTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=DEFAULT_SOURCE, maxDepth=DEFAULT_MAXDEPTH) {
 
   let queryString;
   const constraints = [];
@@ -79,10 +80,16 @@ function searchDeeperTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=D
            facets : {"names":[], "maxElements":-1}
     };
 
-    return fetchContent.searchDeeper(params)
+    return fetchContent.searchDeeper(params, maxDepth)
 }
 
-function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY, source=DEFAULT_SOURCE) {
+function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_SORTBY, source=DEFAULT_SOURCE, maxDepth=DEFAULT_MAXDEPTH) {
+
+  maxDepth = parseInt( maxDepth, 10 );
+
+  if (maxDepth < 1 || maxDepth > DEFAULT_MAX_MAXDEPTH) {
+    maxDepth = DEFAULT_MAXDEPTH;
+  }
 
   const sortByFns = {
     'position' : function(a,b){
@@ -131,7 +138,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
   const sortByFn = sortByFns[sortBy];
   const counts = {};
 
-  return searchDeeperTitlesInYear(term, year, source)
+  return searchDeeperTitlesInYear(term, year, source, maxDepth)
   .then(searchItems => {
     const firstSearchItem = searchItems[0];
     let results = [];
@@ -177,6 +184,7 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
       term,
       year,
       sortBy,
+      maxDepth,
       sortBys : Object.keys( sortByFns ),
       sortBysWithSelected : Object.keys( sortByFns ).map( sb => {
         return {
