@@ -77,7 +77,8 @@ function searchDeeperTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, source=D
            offset : 0,
           aspects : ["summary", "title", "lifecycle"], // [ "title", "location", "summary", "lifecycle", "metadata"],
       constraints,
-           facets : {"names":[], "maxElements":-1}
+           facets : {"names":[], "maxElements":-1},
+        curations : ["ARTICLES", "BLOGS", "VIDEOS"],
     };
 
     return fetchContent.searchDeeper(params, maxDepth)
