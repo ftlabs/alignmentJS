@@ -155,7 +155,10 @@ function alignTitlesInYear(term=DEFAULT_TERM, year=DEFAULT_YEAR, sortBy=DEFAULT_
     const regex = new RegExp(regexStr, 'i');
     // debug(`alignTitlesInYear: regexStr=${JSON.stringify(regexStr)}`);
     return results.map( result => {
-      const text = (source === 'title')? result.title.title : result.summary.excerpt;
+      let text = (source === 'title')? result.title.title : result.summary.excerpt;
+      if (text === undefined) {
+        text = '';
+      }
       const match = regex.exec(text.replace(/\.\.\./g, ' ... '));
       // debug(`alignTitlesInYear: title=${title}, match=${JSON.stringify(match)}`);
       return {
