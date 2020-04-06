@@ -4,7 +4,6 @@ const debug = require('debug')(`suggest:index`);
 const express = require('express');
 const path = require('path');
 const app = express();
-const validateRequest = require('./helpers/check-token');
 const articles = require('./routes/articles');
 
 // view engine setup
