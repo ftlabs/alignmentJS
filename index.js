@@ -34,7 +34,7 @@ app.use(session({
 
 app.use(requestLogger);
 
-// these routes do *not* have s3o
+// these routes do *not* have OKTA
 app.use('/static', express.static('static'));
 
 const TOKEN = process.env.TOKEN;
@@ -42,7 +42,7 @@ if (!TOKEN) {
   throw new Error('ERROR: TOKEN not specified in env');
 }
 
-// these route *do* use s3o
+// these route *do* use OKTA
 app.set('json spaces', 2);
 
 
